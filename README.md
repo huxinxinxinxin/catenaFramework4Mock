@@ -1,1 +1,0 @@
-#catenaFramework4Mock

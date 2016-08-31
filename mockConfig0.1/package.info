@@ -1,0 +1,6 @@
+//文件名字是用environment.properties里面的version来控制,如果是0.1 那么文件名就是mockConfig0.1
+
+//文件里面只支持key=value的方式
+//注意:key必须和environment.properties里面的api.key一致,value也是如此
+
+//#开头可以写注释,只有一行
