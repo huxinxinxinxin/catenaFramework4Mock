@@ -71,8 +71,10 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         if (Objects.nonNull(sort)) {
             String key = sort.split("\\.")[0];
             String order = sort.split("\\.")[1];
-            final Function<LinkedHashMap, Object> by = p1 -> p1.get(key);
-            resultMap.get("list").get(0).get(key);
+            Comparator comparator = getComparator(resultMap, key, order);
+            if (Objects.nonNull(comparator)) {
+                stream = stream.sorted(comparator);
+            }
         }
         if (Objects.nonNull(index)) {
             stream = stream.skip(Long.parseLong(index));
@@ -82,6 +84,30 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         }
         result.put("list", stream.collect(Collectors.toList()));
         return result;
+    }
+
+    private Comparator getComparator(Map<String, List<LinkedHashMap>> resultMap, String key, String order) {
+        Comparator comparator = null;
+        if (resultMap.get("list").get(0).get(key) instanceof Integer) {
+            final Function<LinkedHashMap, Integer> by = p1 -> (Integer) p1.get(key);
+            comparator = Comparator.comparing(by);
+        }
+        if (resultMap.get("list").get(0).get(key) instanceof String) {
+            final Function<LinkedHashMap, String> by = p1 -> (String) p1.get(key);
+            comparator = Comparator.comparing(by);
+        }
+        if (resultMap.get("list").get(0).get(key) instanceof Double) {
+            final Function<LinkedHashMap, Double> by = p1 -> (Double) p1.get(key);
+            comparator = Comparator.comparing(by);
+        }
+        if (resultMap.get("list").get(0).get(key) instanceof Date) {
+            final Function<LinkedHashMap, Date> by = p1 -> (Date) p1.get(key);
+            comparator = Comparator.comparing(by);
+        }
+        if (Objects.nonNull(comparator) && order.equalsIgnoreCase("desc")) {
+            comparator.reversed();
+        }
+        return comparator;
     }
 
     private void checkScanMockData() throws IOException {
