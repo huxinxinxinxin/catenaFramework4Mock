@@ -2,15 +2,23 @@ package com.catena.web.interceptor;
 
 import com.catena.core.CatenaContext;
 import com.catena.mock.core.ScanUrlAndDataContext;
+import com.catena.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by hx-pc on 16-5-17.
@@ -27,24 +35,44 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        checkScanMockData();
         StringBuilder apiKey = new StringBuilder(request.getRequestURI());
         if (request.getParameterNames() != null && request.getParameterMap().size() > 0) {
             apiKey.append("?");
-            for (Map.Entry<String,String[]> e : (request.getParameterMap()).entrySet()) {
+            for (Map.Entry<String, String[]> e : (request.getParameterMap()).entrySet()) {
                 apiKey.append(e.getKey()).append("=").append(e.getValue()[0]).append("&");
             }
-            apiKey = new StringBuilder(apiKey.substring(0,apiKey.length()-1));
+            apiKey = new StringBuilder(apiKey.substring(0, apiKey.length() - 1));
         }
-        LOGGER.info("请求 {}",apiKey);
+        LOGGER.info("请求 {}", apiKey);
         String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
         if (!StringUtils.isEmpty(data)) {
-            /*LOGGER.info("{}",catenaContext.getNodeOperationRepository());
-            response.setHeader("Content-Type", "application/json");
-            response.getOutputStream().write(data.toString().getBytes());*/
             request.setAttribute("data", data);
             catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
         }
         return false;
+    }
+
+    protected void checkScanMockData() throws IOException {
+        List<File> files = new CopyOnWriteArrayList<>();
+        File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
+        for (File file : rootDir.listFiles()) {
+            validateLastModified(files, file);
+        }
+        if (!CollectionUtils.isEmpty(files)) {
+            scanUrlAndDataContext.scanFile(files);
+        }
+    }
+
+    protected void validateLastModified(List<File> files, File file) {
+        Map<String, Long> fileLastModified = scanUrlAndDataContext.getFileLastModified();
+        if (Objects.isNull(fileLastModified.get(file.getName()))) {
+            files.add(file);
+        } else {
+            if (!fileLastModified.get(file.getName()).equals(file.lastModified())) {
+                files.add(file);
+            }
+        }
     }
 
 }

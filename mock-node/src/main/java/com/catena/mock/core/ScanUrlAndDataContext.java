@@ -3,6 +3,7 @@ package com.catena.mock.core;
 import com.catena.mock.MockRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
 import java.io.*;
 import java.util.HashMap;
@@ -31,11 +32,24 @@ public class ScanUrlAndDataContext {
     private Map<String, String> resourceDataPutMap = new HashMap<>();
     private Map<String, String> resourceDataDeleteMap = new HashMap<>();
     private Map<String, String> environmentMap = new HashMap<>();
+    private Map<String, Long> fileLastModified = new HashMap<>();
     private boolean scanSwitch = false;
 
     public ScanUrlAndDataContext() throws IOException {
         loadEnvironment();
         load();
+        scanLastModified();
+    }
+
+    private void scanLastModified() throws IOException {
+        List<File> files = new CopyOnWriteArrayList<>();
+        File rootDir = new File(FILE_PATH);
+        for (File file : rootDir.listFiles()) {
+            files.add(file);
+        }
+        if (!CollectionUtils.isEmpty(files)) {
+            this.scanFile(files);
+        }
     }
 
     public static ScanUrlAndDataContext reset() {
@@ -75,6 +89,20 @@ public class ScanUrlAndDataContext {
             LOGGER.info("创建目录mockConfig成功");
         }
         List<File> files = getFiles(rootDir);
+        scanFile(files);
+    }
+
+    private List<File> getFiles(File rootDir) {
+        List<File> list = new CopyOnWriteArrayList<>();
+        for (String fileName : rootDir.list()) {
+            if (fileName.endsWith("properties")) {
+                list.add(new File(rootDir.getAbsolutePath() + "/" + fileName));
+            }
+        }
+        return list;
+    }
+
+    public void scanFile(List<File> files) throws IOException {
         for (File file : files) {
             InputStreamReader isr = new InputStreamReader(new FileInputStream(file), "utf-8");
             BufferedReader br = new BufferedReader(isr);
@@ -89,16 +117,6 @@ public class ScanUrlAndDataContext {
             }
             br.close();
         }
-    }
-
-    private List<File> getFiles(File rootDir) {
-        List<File> list = new CopyOnWriteArrayList<>();
-        for (String fileName : rootDir.list()) {
-            if (fileName.endsWith("properties")) {
-                list.add(new File(rootDir.getAbsolutePath() + "/" + fileName));
-            }
-        }
-        return list;
     }
 
     private void analyzeMockLineStr(StringBuilder lineStr) {
@@ -191,5 +209,9 @@ public class ScanUrlAndDataContext {
         } else {
             throw new MockRuntimeException("httpMethod 错误");
         }
+    }
+
+    public Map<String, Long> getFileLastModified() {
+        return fileLastModified;
     }
 }

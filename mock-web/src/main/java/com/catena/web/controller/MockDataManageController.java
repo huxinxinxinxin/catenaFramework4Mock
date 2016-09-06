@@ -40,6 +40,8 @@ public class MockDataManageController extends CatenaControllerBase {
                                                        @RequestParam (required = false)Long capitalDown,
                                                        @RequestParam (required = false)Integer personUp,
                                                        @RequestParam (required = false)Integer personDown) throws IOException {
+
+
         List<LinkedHashMap> results = ParkEntity.buildListParkEntity();
         results = results.stream().filter(linkedHashMap -> {
             if (capitalUp != null) {
