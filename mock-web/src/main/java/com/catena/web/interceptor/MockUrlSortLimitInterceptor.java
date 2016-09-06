@@ -105,7 +105,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
             comparator = Comparator.comparing(by);
         }
         if (Objects.nonNull(comparator) && order.equalsIgnoreCase("desc")) {
-            comparator.reversed();
+            comparator = comparator.reversed();
         }
         return comparator;
     }
