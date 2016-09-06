@@ -36,6 +36,16 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         checkScanMockData();
+        StringBuilder apiKey = getApiKey(request);
+        String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
+        if (!StringUtils.isEmpty(data)) {
+            request.setAttribute("data", data);
+            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
+        }
+        return false;
+    }
+
+    private StringBuilder getApiKey(HttpServletRequest request) {
         StringBuilder apiKey = new StringBuilder(request.getRequestURI());
         if (request.getParameterNames() != null && request.getParameterMap().size() > 0) {
             apiKey.append("?");
@@ -45,15 +55,10 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
             apiKey = new StringBuilder(apiKey.substring(0, apiKey.length() - 1));
         }
         LOGGER.info("请求 {}", apiKey);
-        String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
-        if (!StringUtils.isEmpty(data)) {
-            request.setAttribute("data", data);
-            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
-        }
-        return false;
+        return apiKey;
     }
 
-    protected void checkScanMockData() throws IOException {
+    private void checkScanMockData() throws IOException {
         List<File> files = new CopyOnWriteArrayList<>();
         File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
         for (File file : rootDir.listFiles()) {
@@ -64,7 +69,7 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
         }
     }
 
-    protected void validateLastModified(List<File> files, File file) {
+    private void validateLastModified(List<File> files, File file) {
         Map<String, Long> fileLastModified = scanUrlAndDataContext.getFileLastModified();
         if (Objects.isNull(fileLastModified.get(file.getName()))) {
             files.add(file);
