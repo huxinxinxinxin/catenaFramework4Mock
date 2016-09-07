@@ -45,4 +45,29 @@ public class CatenaConfigController {
         return target[target.length - 1];
     }
 
+
+    @RequestMapping(value = "/{2nd}/{target}", method = RequestMethod.GET)
+    public String secoundGet(@PathVariable String target, HttpServletRequest servletRequest, Model model) throws IOException {
+        model.addAttribute(CatenaOperationConstant.START_RETURN_VALUE, servletRequest.getAttribute(CatenaOperationConstant.START_RETURN_VALUE));
+        return getTargetIndex(target.split("\\."));
+    }
+
+    @RequestMapping(value = "/{2nd}/{target}", method = RequestMethod.POST)
+    public String secoundPost(@PathVariable String target, HttpServletRequest servletRequest, Model model) throws IOException {
+        model.addAttribute(CatenaOperationConstant.START_RETURN_VALUE, servletRequest.getAttribute(CatenaOperationConstant.START_RETURN_VALUE));
+        return getTargetIndex(target.split("\\."));
+    }
+
+    @RequestMapping(value = "/{2nd}/{target}", method = RequestMethod.PUT)
+    public String secoundPut(@PathVariable String target, HttpServletRequest servletRequest, Model model) throws IOException {
+        model.addAttribute(CatenaOperationConstant.START_RETURN_VALUE, servletRequest.getAttribute(CatenaOperationConstant.START_RETURN_VALUE));
+        return getTargetIndex(target.split("\\."));
+    }
+
+    @RequestMapping(value = "/{2nd}/{target}", method = RequestMethod.DELETE)
+    public String secoundDelete(@PathVariable String target, HttpServletRequest servletRequest, Model model) throws IOException {
+        model.addAttribute(CatenaOperationConstant.START_RETURN_VALUE, servletRequest.getAttribute(CatenaOperationConstant.START_RETURN_VALUE));
+        return getTargetIndex(target.split("\\."));
+    }
+
 }

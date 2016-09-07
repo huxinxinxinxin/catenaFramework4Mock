@@ -130,12 +130,24 @@ public class ScanUrlAndDataContext {
                 resourceUrlMap.put(beforePt, afterPt);
             }
             if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_GET_KEY))) {
+                if (Objects.nonNull(resourceDataGetMap.get(resourceUrlMap.get(beforePt)))) {
+                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
+                }
                 resourceDataGetMap.put(resourceUrlMap.get(beforePt), afterPt);
             } else if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_POST_KEY))) {
+                if (Objects.nonNull(resourceDataPostMap.get(resourceUrlMap.get(beforePt)))) {
+                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
+                }
                 resourceDataPostMap.put(resourceUrlMap.get(beforePt), afterPt);
             } else if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_PUT_KEY))) {
+                if (Objects.nonNull(resourceDataPutMap.get(resourceUrlMap.get(beforePt)))) {
+                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
+                }
                 resourceDataPutMap.put(resourceUrlMap.get(beforePt), afterPt);
             } else if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_DELETE_KEY))) {
+                if (Objects.nonNull(resourceDataDeleteMap.get(resourceUrlMap.get(beforePt)))) {
+                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
+                }
                 resourceDataDeleteMap.put(resourceUrlMap.get(beforePt), afterPt);
             }
         }

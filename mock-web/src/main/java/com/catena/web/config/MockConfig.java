@@ -4,6 +4,7 @@ import com.catena.core.CatenaContext;
 import com.catena.core.CatenaControllerBase;
 import com.catena.mock.MockRuntimeException;
 import com.catena.mock.core.ScanUrlAndDataContext;
+import com.catena.web.interceptor.MockUrlConditionalInterceptor;
 import com.catena.web.interceptor.MockUrlInterceptor;
 import com.catena.web.interceptor.MockUrlSortLimitInterceptor;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,9 @@ public class MockConfig extends WebMvcConfigurationSupport {
 
         registry.addInterceptor(mockUrlSortLimitInterceptor())
                 .addPathPatterns("/api/list/**");
+
+        registry.addInterceptor(mockUrlConditionalInterceptor())
+                .addPathPatterns("/api/conditional/**");
     }
 
     @Bean
@@ -40,6 +44,11 @@ public class MockConfig extends WebMvcConfigurationSupport {
     @Bean
     protected MockUrlSortLimitInterceptor mockUrlSortLimitInterceptor() {
         return new MockUrlSortLimitInterceptor();
+    }
+
+    @Bean
+    protected MockUrlConditionalInterceptor mockUrlConditionalInterceptor() {
+        return new MockUrlConditionalInterceptor();
     }
 
     @Bean
