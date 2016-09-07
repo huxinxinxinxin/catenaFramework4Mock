@@ -33,6 +33,9 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
     @Autowired
     private CatenaContext catenaContext;
 
+
+    private static final String URL_DATA_KEY = "list";
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         checkScanMockData();
@@ -61,9 +64,9 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         return apiKey;
     }
 
-    private Map<String, List<LinkedHashMap>> toSortLimit(HttpServletRequest request, Map<String, List<LinkedHashMap>> resultMap) {
+    protected Map<String, List<LinkedHashMap>> toSortLimit(HttpServletRequest request, Map<String, List<LinkedHashMap>> resultMap) {
         Map<String, List<LinkedHashMap>> result = new HashMap<>();
-        List<LinkedHashMap> list = resultMap.get("list");
+        List<LinkedHashMap> list = resultMap.get(URL_DATA_KEY);
         Stream<LinkedHashMap> stream = list.stream();
         String sort = request.getParameter("sort");
         String index = request.getParameter("index");
@@ -71,7 +74,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         if (Objects.nonNull(sort)) {
             String key = sort.split("\\.")[0];
             String order = sort.split("\\.")[1];
-            Comparator comparator = getComparator(resultMap, key, order);
+            Comparator<LinkedHashMap> comparator = getComparator(resultMap, key, order);
             if (Objects.nonNull(comparator)) {
                 stream = stream.sorted(comparator);
             }
@@ -82,25 +85,26 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         if (Objects.nonNull(size)) {
             stream = stream.limit(Long.parseLong(size));
         }
-        result.put("list", stream.collect(Collectors.toList()));
+        result.put(URL_DATA_KEY, stream.collect(Collectors.toList()));
         return result;
     }
 
-    private Comparator getComparator(Map<String, List<LinkedHashMap>> resultMap, String key, String order) {
-        Comparator comparator = null;
-        if (resultMap.get("list").get(0).get(key) instanceof Integer) {
+    protected Comparator<LinkedHashMap> getComparator(Map<String, List<LinkedHashMap>> resultMap, String key, String order) {
+        Comparator<LinkedHashMap> comparator = null;
+        Object o = resultMap.get(URL_DATA_KEY).get(0).get(key);
+        if ( o instanceof Integer) {
             final Function<LinkedHashMap, Integer> by = p1 -> (Integer) p1.get(key);
             comparator = Comparator.comparing(by);
         }
-        if (resultMap.get("list").get(0).get(key) instanceof String) {
+        if ( o  instanceof String) {
             final Function<LinkedHashMap, String> by = p1 -> (String) p1.get(key);
             comparator = Comparator.comparing(by);
         }
-        if (resultMap.get("list").get(0).get(key) instanceof Double) {
+        if ( o instanceof Double) {
             final Function<LinkedHashMap, Double> by = p1 -> (Double) p1.get(key);
             comparator = Comparator.comparing(by);
         }
-        if (resultMap.get("list").get(0).get(key) instanceof Date) {
+        if ( o instanceof Date) {
             final Function<LinkedHashMap, Date> by = p1 -> (Date) p1.get(key);
             comparator = Comparator.comparing(by);
         }
@@ -110,7 +114,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         return comparator;
     }
 
-    private void checkScanMockData() throws IOException {
+    protected void checkScanMockData() throws IOException {
         List<File> files = new CopyOnWriteArrayList<>();
         File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
         for (File file : rootDir.listFiles()) {
@@ -121,7 +125,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         }
     }
 
-    private void validateLastModified(List<File> files, File file) {
+    protected void validateLastModified(List<File> files, File file) {
         Map<String, Long> fileLastModified = scanUrlAndDataContext.getFileLastModified();
         if (Objects.isNull(fileLastModified.get(file.getName()))) {
             files.add(file);
