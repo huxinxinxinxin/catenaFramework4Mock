@@ -64,8 +64,9 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         return apiKey;
     }
 
-    protected Map<String, List<LinkedHashMap>> toSortLimit(HttpServletRequest request, Map<String, List<LinkedHashMap>> resultMap) {
-        Map<String, List<LinkedHashMap>> result = new HashMap<>();
+    protected Map<String, Object> toSortLimit(HttpServletRequest request, Map<String, List<LinkedHashMap>> resultMap) {
+        Map<String, Object> result = new HashMap<>();
+        Map<String, List<LinkedHashMap>> resultData = new HashMap<>();
         List<LinkedHashMap> list = resultMap.get(URL_DATA_KEY);
         Stream<LinkedHashMap> stream = list.stream();
         String sort = request.getParameter("sort");
@@ -85,26 +86,29 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         if (Objects.nonNull(size)) {
             stream = stream.limit(Long.parseLong(size));
         }
-        result.put(URL_DATA_KEY, stream.collect(Collectors.toList()));
+        resultData.put(URL_DATA_KEY, stream.collect(Collectors.toList()));
+        result.put("totalSize", list.size());
+        result.put("totalPage", list.size() % Integer.valueOf(size) == 0 ? list.size() / Integer.valueOf(size) : list.size() / Integer.valueOf(size) + 1);
+        result.put("data", resultData);
         return result;
     }
 
     protected Comparator<LinkedHashMap> getComparator(Map<String, List<LinkedHashMap>> resultMap, String key, String order) {
         Comparator<LinkedHashMap> comparator = null;
         Object o = resultMap.get(URL_DATA_KEY).get(0).get(key);
-        if ( o instanceof Integer) {
+        if (o instanceof Integer) {
             final Function<LinkedHashMap, Integer> by = p1 -> (Integer) p1.get(key);
             comparator = Comparator.comparing(by);
         }
-        if ( o  instanceof String) {
+        if (o instanceof String) {
             final Function<LinkedHashMap, String> by = p1 -> (String) p1.get(key);
             comparator = Comparator.comparing(by);
         }
-        if ( o instanceof Double) {
+        if (o instanceof Double) {
             final Function<LinkedHashMap, Double> by = p1 -> (Double) p1.get(key);
             comparator = Comparator.comparing(by);
         }
-        if ( o instanceof Date) {
+        if (o instanceof Date) {
             final Function<LinkedHashMap, Date> by = p1 -> (Date) p1.get(key);
             comparator = Comparator.comparing(by);
         }

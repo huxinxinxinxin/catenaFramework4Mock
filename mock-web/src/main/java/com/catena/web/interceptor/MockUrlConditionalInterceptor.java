@@ -41,12 +41,14 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
         return false;
     }
 
-    protected Map<String, List<LinkedHashMap>> toConditional(HttpServletRequest request, Map<String, List<LinkedHashMap>> map) {
+    protected Map<String, Object> toConditional(HttpServletRequest request, Map<String, List<LinkedHashMap>> map) {
         Map<String, List<LinkedHashMap>> result = new HashMap<>();
         List<LinkedHashMap> list = map.get(URL_DATA_KEY);
         Stream<LinkedHashMap> stream = list.stream();
         for (Map.Entry<String, String[]> e : (request.getParameterMap()).entrySet()) {
-            stream = filter(e.getKey(), e.getValue()[0], stream);
+            if (!e.getKey().equalsIgnoreCase("sort") && !e.getKey().equalsIgnoreCase("index") && !e.getKey().equalsIgnoreCase("size")) {
+                stream = filter(e.getKey(), e.getValue()[0], stream);
+            }
         }
         result.put(URL_DATA_KEY, stream.collect(Collectors.toList()));
         return toSortLimit(request, result);
