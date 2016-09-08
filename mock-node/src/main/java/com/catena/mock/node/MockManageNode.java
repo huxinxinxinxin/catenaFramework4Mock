@@ -38,7 +38,7 @@ public class MockManageNode extends CatenaNode {
         File file = new File(ScanUrlAndDataContext.FILE_PATH + ScanUrlAndDataContext.FILE_NAME + ".properties");
         if (!file.exists()) {
             if(!file.createNewFile()) {
-                throw new MockRuntimeException("mockConfig.properties 创建失败");
+                throw new MockRuntimeException(402,"mockConfig.properties 创建失败");
             }
         }
         FileOutputStream fos = new FileOutputStream(file, true);
@@ -57,7 +57,7 @@ public class MockManageNode extends CatenaNode {
         } else if (httpRequestMethod == HttpRequestMethod.DELETE) {
             return ScanUrlAndDataContext.DATA_DELETE_KEY;
         } else {
-            throw new MockRuntimeException(REQUEST_ERROR);
+            throw new MockRuntimeException(402,REQUEST_ERROR);
         }
     }
 
@@ -79,7 +79,7 @@ public class MockManageNode extends CatenaNode {
         } else if (method.equalsIgnoreCase(HttpRequestMethod.DELETE.name())) {
             return HttpRequestMethod.DELETE;
         } else {
-            throw new MockRuntimeException(REQUEST_ERROR);
+            throw new MockRuntimeException(402,REQUEST_ERROR);
         }
     }
 
@@ -94,7 +94,7 @@ public class MockManageNode extends CatenaNode {
         } else if (httpRequestMethod == HttpRequestMethod.DELETE) {
             return getBean(ScanUrlAndDataContext.class).getResourceDataDeleteMap();
         } else {
-            throw new MockRuntimeException(REQUEST_ERROR);
+            throw new MockRuntimeException(402,REQUEST_ERROR);
         }
     }
 

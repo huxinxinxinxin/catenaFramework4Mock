@@ -42,13 +42,9 @@ public class ScanUrlAndDataContext {
     }
 
     private void scanLastModified() throws IOException {
-        List<File> files = new CopyOnWriteArrayList<>();
         File rootDir = new File(FILE_PATH);
         for (File file : rootDir.listFiles()) {
-            files.add(file);
-        }
-        if (!CollectionUtils.isEmpty(files)) {
-            this.scanFile(files);
+            fileLastModified.put(file.getName(), file.lastModified());
         }
     }
 
@@ -56,7 +52,7 @@ public class ScanUrlAndDataContext {
         try {
             return new ScanUrlAndDataContext();
         } catch (IOException e) {
-            throw new MockRuntimeException(e, "500001");
+            throw new MockRuntimeException(501);
         }
     }
 
@@ -64,7 +60,7 @@ public class ScanUrlAndDataContext {
         File file = new File("projectEnvironment/environment.properties");
         if (!file.exists()) {
             LOGGER.error("projectEnvironment/environment.properties 文件不存在");
-            throw new MockRuntimeException("环境配置文件environment不存在请创建");
+            throw new MockRuntimeException(404,"环境配置文件environment不存在请创建");
         }
         FileInputStream fis = new FileInputStream(file);
         StringBuilder lineStr = new StringBuilder();
@@ -219,7 +215,7 @@ public class ScanUrlAndDataContext {
         } else if (method.equalsIgnoreCase(HttpRequestMethod.DELETE.name())) {
             return getResourceDataDeleteMap().get(requestURI);
         } else {
-            throw new MockRuntimeException("httpMethod 错误");
+            throw new MockRuntimeException(405,"httpMethod 错误");
         }
     }
 

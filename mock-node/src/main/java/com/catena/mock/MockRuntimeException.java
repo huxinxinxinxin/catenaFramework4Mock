@@ -1,37 +1,54 @@
 package com.catena.mock;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by hx-pc on 16-6-3.
  */
 public class MockRuntimeException extends RuntimeException {
 
-    private String code = "999";
+    protected int errorCode;
+    protected String message;
 
-    public MockRuntimeException(String code) {
-        super();
-        this.code = code;
+    public MockRuntimeException(int errorCode) {
+        this.errorCode = errorCode;
+        this.message = "Unknown error";
     }
 
-    public MockRuntimeException(String message, String code) {
-        super(message);
-        this.code = code;
+    public MockRuntimeException(int errorCode, String message) {
+        this.errorCode = errorCode;
+        this.message = message;
     }
 
-    public MockRuntimeException(String message, Throwable cause, String code) {
-        super(message, cause);
-        this.code = code;
+    public MockRuntimeException(Throwable throwable) {
+        super(throwable);
     }
 
-    public MockRuntimeException(Throwable cause, String code) {
-        super(cause);
-        this.code = code;
+    public MockRuntimeException(String s, Throwable throwable) {
+        super(s, throwable);
     }
 
-    public String getCode() {
-        return code;
+    public int getErrorCode() {
+        return this.errorCode;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    public String getMessage() {
+        return this.message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public Map toMap() {
+        HashMap map = new HashMap();
+        map.put("errorCode", Integer.valueOf(this.errorCode));
+        map.put("message", this.message);
+        return map;
     }
 }

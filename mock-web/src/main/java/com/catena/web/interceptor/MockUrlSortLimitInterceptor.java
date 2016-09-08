@@ -1,6 +1,7 @@
 package com.catena.web.interceptor;
 
 import com.catena.core.CatenaContext;
+import com.catena.mock.MockRuntimeException;
 import com.catena.mock.core.ScanUrlAndDataContext;
 import com.catena.util.JsonUtil;
 import org.slf4j.Logger;
@@ -67,14 +68,20 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
     protected Map<String, Object> toSortLimit(HttpServletRequest request, Map<String, List<LinkedHashMap>> resultMap) {
         Map<String, Object> result = new HashMap<>();
         Map<String, List<LinkedHashMap>> resultData = new HashMap<>();
-        List<LinkedHashMap> list = resultMap.get(URL_DATA_KEY);
+        List<LinkedHashMap> list = resultMap.get(getUrlDataKey());
         Stream<LinkedHashMap> stream = list.stream();
         String sort = request.getParameter("sort");
         String index = request.getParameter("index");
         String size = request.getParameter("size");
         if (Objects.nonNull(sort)) {
+            if (sort.split("\\.").length <= 1) {
+                throw new MockRuntimeException(403,"sort格式错误,filed.asc/filed.desc");
+            }
             String key = sort.split("\\.")[0];
             String order = sort.split("\\.")[1];
+            if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
+                throw new MockRuntimeException(403,"sort格式错误,filed.asc/filed.desc");
+            }
             Comparator<LinkedHashMap> comparator = getComparator(resultMap, key, order);
             if (Objects.nonNull(comparator)) {
                 stream = stream.sorted(comparator);
@@ -85,23 +92,31 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         }
         if (Objects.nonNull(size)) {
             stream = stream.limit(Long.parseLong(size));
+            result.put("totalPage", list.size() % Integer.valueOf(size) == 0 ? list.size() / Integer.valueOf(size) : list.size() / Integer.valueOf(size) + 1);
         }
-        resultData.put(URL_DATA_KEY, stream.collect(Collectors.toList()));
+        resultData.put(getUrlDataKey(), stream.collect(Collectors.toList()));
         result.put("totalSize", list.size());
-        result.put("totalPage", list.size() % Integer.valueOf(size) == 0 ? list.size() / Integer.valueOf(size) : list.size() / Integer.valueOf(size) + 1);
         result.put("data", resultData);
         return result;
     }
 
     protected Comparator<LinkedHashMap> getComparator(Map<String, List<LinkedHashMap>> resultMap, String key, String order) {
         Comparator<LinkedHashMap> comparator = null;
-        Object o = resultMap.get(URL_DATA_KEY).get(0).get(key);
+        Object o = resultMap.get(getUrlDataKey()).get(0).get(key);
         if (o instanceof Integer) {
             final Function<LinkedHashMap, Integer> by = p1 -> (Integer) p1.get(key);
             comparator = Comparator.comparing(by);
         }
+        if (o instanceof Long) {
+            final Function<LinkedHashMap, Long> by = p1 -> (Long) p1.get(key);
+            comparator = Comparator.comparing(by);
+        }
         if (o instanceof String) {
             final Function<LinkedHashMap, String> by = p1 -> (String) p1.get(key);
+            comparator = Comparator.comparing(by);
+        }
+        if (o instanceof Float) {
+            final Function<LinkedHashMap, Float> by = p1 -> (Float) p1.get(key);
             comparator = Comparator.comparing(by);
         }
         if (o instanceof Double) {
@@ -138,5 +153,9 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
                 files.add(file);
             }
         }
+    }
+
+    protected String getUrlDataKey() {
+        return URL_DATA_KEY;
     }
 }

@@ -61,7 +61,7 @@ public class MockConfig extends WebMvcConfigurationSupport {
         try {
             return new ScanUrlAndDataContext();
         } catch (IOException e) {
-            throw new MockRuntimeException("初始化ScanUrlAndDataContext失败", e, "500");
+            throw new MockRuntimeException(499,"初始化ScanUrlAndDataContext失败");
         }
     }
 
