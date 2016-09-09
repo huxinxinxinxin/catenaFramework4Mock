@@ -22,13 +22,18 @@ import java.util.stream.Stream;
  */
 public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
 
+    private static final String URL_DATA_KEY = "conditional";
+    private static final String LESS_THAN = "$lt";
+    private static final String GREATER_THAN = "$gt";
+    private static final String LESS_THAN_EQUAL = "$lte";
+    private static final String GREATER_THAN_EQUAL = "$gte";
+    private static final String LIKE = "$regx";
+
     @Autowired
     private ScanUrlAndDataContext scanUrlAndDataContext;
 
     @Autowired
     private CatenaContext catenaContext;
-
-    private static final String URL_DATA_KEY = "conditional";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -59,11 +64,11 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     }
 
     protected Stream<LinkedHashMap> filter(String key, String value, Stream<LinkedHashMap> stream) {
-        if (value.contains("$lt") || value.contains("$gt") || value.contains("$lte") || value.contains("$gte")) {
+        if (value.contains(LESS_THAN) || value.contains(GREATER_THAN) || value.contains(LESS_THAN_EQUAL) || value.contains(GREATER_THAN_EQUAL)) {
             return stream.filter(linkedHashMap -> toLtGtFilter(key, value, linkedHashMap));
         } else {
-            if (value.contains("$regx")) {
-                return stream.filter(linkedHashMap -> ((String) linkedHashMap.get(key)).contains(value.substring(value.lastIndexOf("$regx") + 4, value.length())));
+            if (value.contains(LIKE)) {
+                return stream.filter(linkedHashMap -> ((String) linkedHashMap.get(key)).contains(value.substring(value.lastIndexOf(LIKE) + 4, value.length())));
             }
             return stream.filter(linkedHashMap -> linkedHashMap.get(key).equals(value));
         }
@@ -72,58 +77,58 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     private boolean toLtGtFilter(String key, String value, LinkedHashMap linkedHashMap) {
         String dateFormatStr = "yyyy-MM-dd hh:mm:ss";
         try {
-            if (value.contains("$lte")) {
-                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() <= new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf("$lte") + 4, value.length())).getTime();
-            } else if (value.contains("$gte")) {
-                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() >= new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf("$gte") + 4, value.length())).getTime();
-            } else if (value.contains("$lt")) {
-                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() < new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf("$lt") + 3, value.length())).getTime();
-            } else if (value.contains("$gt")) {
-                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() > new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf("$gt") + 3, value.length())).getTime();
+            if (value.contains(LESS_THAN_EQUAL)) {
+                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() <= new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf(LESS_THAN_EQUAL) + 4, value.length())).getTime();
+            } else if (value.contains(GREATER_THAN_EQUAL)) {
+                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() >= new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf(GREATER_THAN_EQUAL) + 4, value.length())).getTime();
+            } else if (value.contains(LESS_THAN)) {
+                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() < new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length())).getTime();
+            } else if (value.contains(GREATER_THAN)) {
+                return new SimpleDateFormat(dateFormatStr).parse((String) linkedHashMap.get(key)).getTime() > new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length())).getTime();
             }
         } catch (Exception e4) {
             try {
-                if (value.contains("$lte")) {
-                    return (Integer) linkedHashMap.get(key) <= Integer.valueOf(value.substring(value.lastIndexOf("$lte") + 4, value.length()));
-                } else if (value.contains("$gte")) {
-                    return (Integer) linkedHashMap.get(key) >= Integer.valueOf(value.substring(value.lastIndexOf("$gte") + 4, value.length()));
-                } else if (value.contains("$lt")) {
-                    return (Integer) linkedHashMap.get(key) < Integer.valueOf(value.substring(value.lastIndexOf("$lt") + 3, value.length()));
-                } else if (value.contains("$gt")) {
-                    return (Integer) linkedHashMap.get(key) > Integer.valueOf(value.substring(value.lastIndexOf("$gt") + 3, value.length()));
+                if (value.contains(LESS_THAN_EQUAL)) {
+                    return (Integer) linkedHashMap.get(key) <= Integer.valueOf(value.substring(value.lastIndexOf(LESS_THAN_EQUAL) + 4, value.length()));
+                } else if (value.contains(GREATER_THAN_EQUAL)) {
+                    return (Integer) linkedHashMap.get(key) >= Integer.valueOf(value.substring(value.lastIndexOf(GREATER_THAN_EQUAL) + 4, value.length()));
+                } else if (value.contains(LESS_THAN)) {
+                    return (Integer) linkedHashMap.get(key) < Integer.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
+                } else if (value.contains(GREATER_THAN)) {
+                    return (Integer) linkedHashMap.get(key) > Integer.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
                 }
             } catch (Exception e) {
                 try {
-                    if (value.contains("$lte")) {
-                        return (Long) linkedHashMap.get(key) <= Long.valueOf(value.substring(value.lastIndexOf("$lte") + 4, value.length()));
-                    } else if (value.contains("$gte")) {
-                        return (Long) linkedHashMap.get(key) >= Long.valueOf(value.substring(value.lastIndexOf("$gte") + 4, value.length()));
-                    } else if (value.contains("$lt")) {
-                        return (Long) linkedHashMap.get(key) < Long.valueOf(value.substring(value.lastIndexOf("$lt") + 3, value.length()));
-                    } else if (value.contains("$gt")) {
-                        return (Long) linkedHashMap.get(key) > Long.valueOf(value.substring(value.lastIndexOf("$gt") + 3, value.length()));
+                    if (value.contains(LESS_THAN_EQUAL)) {
+                        return (Long) linkedHashMap.get(key) <= Long.valueOf(value.substring(value.lastIndexOf(LESS_THAN_EQUAL) + 4, value.length()));
+                    } else if (value.contains(GREATER_THAN_EQUAL)) {
+                        return (Long) linkedHashMap.get(key) >= Long.valueOf(value.substring(value.lastIndexOf(GREATER_THAN_EQUAL) + 4, value.length()));
+                    } else if (value.contains(LESS_THAN)) {
+                        return (Long) linkedHashMap.get(key) < Long.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
+                    } else if (value.contains(GREATER_THAN)) {
+                        return (Long) linkedHashMap.get(key) > Long.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
                     }
                 } catch (Exception e1) {
                     try {
-                        if (value.contains("$lte")) {
-                            return (Double) linkedHashMap.get(key) <= Double.valueOf(value.substring(value.lastIndexOf("$lte") + 4, value.length()));
-                        } else if (value.contains("$gte")) {
-                            return (Double) linkedHashMap.get(key) >= Double.valueOf(value.substring(value.lastIndexOf("$gte") + 4, value.length()));
-                        } else if (value.contains("$lt")) {
-                            return (Double) linkedHashMap.get(key) < Double.valueOf(value.substring(value.lastIndexOf("$lt") + 3, value.length()));
-                        } else if (value.contains("$gt")) {
-                            return (Double) linkedHashMap.get(key) > Double.valueOf(value.substring(value.lastIndexOf("$gt") + 3, value.length()));
+                        if (value.contains(LESS_THAN_EQUAL)) {
+                            return (Double) linkedHashMap.get(key) <= Double.valueOf(value.substring(value.lastIndexOf(LESS_THAN_EQUAL) + 4, value.length()));
+                        } else if (value.contains(GREATER_THAN_EQUAL)) {
+                            return (Double) linkedHashMap.get(key) >= Double.valueOf(value.substring(value.lastIndexOf(GREATER_THAN_EQUAL) + 4, value.length()));
+                        } else if (value.contains(LESS_THAN)) {
+                            return (Double) linkedHashMap.get(key) < Double.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
+                        } else if (value.contains(GREATER_THAN)) {
+                            return (Double) linkedHashMap.get(key) > Double.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
                         }
                     } catch (Exception e2) {
                         try {
-                            if (value.contains("$lte")) {
-                                return (Float) linkedHashMap.get(key) <= Float.valueOf(value.substring(value.lastIndexOf("$lte") + 4, value.length()));
-                            } else if (value.contains("$gte")) {
-                                return (Float) linkedHashMap.get(key) >= Float.valueOf(value.substring(value.lastIndexOf("$gte") + 4, value.length()));
-                            } else if (value.contains("$lt")) {
-                                return (Float) linkedHashMap.get(key) < Float.valueOf(value.substring(value.lastIndexOf("$lt") + 3, value.length()));
-                            } else if (value.contains("$gt")) {
-                                return (Float) linkedHashMap.get(key) > Float.valueOf(value.substring(value.lastIndexOf("$gt") + 3, value.length()));
+                            if (value.contains(LESS_THAN_EQUAL)) {
+                                return (Float) linkedHashMap.get(key) <= Float.valueOf(value.substring(value.lastIndexOf(LESS_THAN_EQUAL) + 4, value.length()));
+                            } else if (value.contains(GREATER_THAN_EQUAL)) {
+                                return (Float) linkedHashMap.get(key) >= Float.valueOf(value.substring(value.lastIndexOf(GREATER_THAN_EQUAL) + 4, value.length()));
+                            } else if (value.contains(LESS_THAN)) {
+                                return (Float) linkedHashMap.get(key) < Float.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
+                            } else if (value.contains(GREATER_THAN)) {
+                                return (Float) linkedHashMap.get(key) > Float.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
                             }
                         } catch (Exception e3) {
                             throw new MockRuntimeException(403, "转换失败:{}" + e.getMessage());
