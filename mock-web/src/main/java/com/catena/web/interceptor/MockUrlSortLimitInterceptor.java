@@ -94,9 +94,9 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         if (Objects.isNull(size) || Integer.valueOf(size) - 1 < 0) {
             size = "10";
         }
-        stream = stream.skip(Long.parseLong(index) - 1).limit(Long.parseLong(size));
-        result.put("totalPage", list.size() % Integer.valueOf(size) == 0 ? list.size() / Integer.valueOf(size) : list.size() / Integer.valueOf(size) + 1);
+        stream = stream.skip((Long.parseLong(index) - 1) * Long.parseLong(size)).limit(Long.parseLong(size));
         resultData.put(getUrlDataKey(), stream.collect(Collectors.toList()));
+        result.put("totalPage", list.size() % Integer.valueOf(size) == 0 ? list.size() / Integer.valueOf(size) : list.size() / Integer.valueOf(size) + 1);
         result.put("totalSize", list.size());
         result.put("index", Long.parseLong(index));
         result.put("size", Long.parseLong(size));
