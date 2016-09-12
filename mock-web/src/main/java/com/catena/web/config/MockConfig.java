@@ -25,7 +25,7 @@ public class MockConfig extends WebMvcConfigurationSupport {
     public void addInterceptors(InterceptorRegistry registry) {
 
         registry.addInterceptor(mockUrlInterceptor())
-                .addPathPatterns("/api*")
+                .addPathPatterns("/api/*")
                 .excludePathPatterns("/api/mock*", "/favicon.ico", "/error")
                 .excludePathPatterns("/api/park");
 

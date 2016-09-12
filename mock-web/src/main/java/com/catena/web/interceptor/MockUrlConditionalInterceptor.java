@@ -4,6 +4,8 @@ import com.catena.core.CatenaContext;
 import com.catena.mock.MockRuntimeException;
 import com.catena.mock.core.ScanUrlAndDataContext;
 import com.catena.util.JsonUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
@@ -22,6 +24,7 @@ import java.util.stream.Stream;
  */
 public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockUrlConditionalInterceptor.class);
     private static final String URL_DATA_KEY = "conditional";
     private static final String LESS_THAN = "$lt";
     private static final String GREATER_THAN = "$gt";
@@ -38,7 +41,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         checkScanMockData();
-        StringBuilder apiKey = new StringBuilder(request.getRequestURI());
+        StringBuilder apiKey = getApiKey(request);
         String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
         if (!StringUtils.isEmpty(data)) {
             Map<String, List<LinkedHashMap>> map = JsonUtil.readValue(data.getBytes(), Map.class);
@@ -46,6 +49,11 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
             catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithObject(request, response);
         }
         return false;
+    }
+
+    protected StringBuilder getApiKey(HttpServletRequest request) {
+        LOGGER.info("请求 {}, 来源 {} ", request.getRequestURI(), request.getRemoteHost());
+        return new StringBuilder(request.getRequestURI());
     }
 
     protected Map<String, Object> toConditional(HttpServletRequest request, Map<String, List<LinkedHashMap>> map) {

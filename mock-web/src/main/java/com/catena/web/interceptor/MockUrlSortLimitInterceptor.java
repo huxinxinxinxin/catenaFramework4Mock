@@ -61,7 +61,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
             }
             apiKey = new StringBuilder(apiKey.substring(0, apiKey.length() - 1));
         }
-        LOGGER.info("请求 {}", apiKey);
+        LOGGER.info("请求 {}, 来源 {} ", request.getRequestURI(), request.getRemoteHost());
         return apiKey;
     }
 
@@ -75,27 +75,31 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         String size = request.getParameter("size");
         if (Objects.nonNull(sort)) {
             if (sort.split("\\.").length <= 1) {
-                throw new MockRuntimeException(403,"sort格式错误,filed.asc/filed.desc");
+                throw new MockRuntimeException(403, "sort格式错误,filed.asc/filed.desc");
             }
             String key = sort.split("\\.")[0];
             String order = sort.split("\\.")[1];
             if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
-                throw new MockRuntimeException(403,"sort格式错误,filed.asc/filed.desc");
+                throw new MockRuntimeException(403, "sort格式错误,filed.asc/filed.desc");
             }
             Comparator<LinkedHashMap> comparator = getComparator(resultMap, key, order);
             if (Objects.nonNull(comparator)) {
                 stream = stream.sorted(comparator);
             }
         }
-        if (Objects.nonNull(index)) {
-            stream = stream.skip(Long.parseLong(index));
+
+        if (Objects.isNull(index) || Integer.valueOf(index) - 1 < 0) {
+            index = "1";
         }
-        if (Objects.nonNull(size)) {
-            stream = stream.limit(Long.parseLong(size));
-            result.put("totalPage", list.size() % Integer.valueOf(size) == 0 ? list.size() / Integer.valueOf(size) : list.size() / Integer.valueOf(size) + 1);
+        if (Objects.isNull(size) || Integer.valueOf(size) - 1 < 0) {
+            size = "10";
         }
+        stream = stream.skip(Long.parseLong(index) - 1).limit(Long.parseLong(size));
+        result.put("totalPage", list.size() % Integer.valueOf(size) == 0 ? list.size() / Integer.valueOf(size) : list.size() / Integer.valueOf(size) + 1);
         resultData.put(getUrlDataKey(), stream.collect(Collectors.toList()));
         result.put("totalSize", list.size());
+        result.put("index", Long.parseLong(index));
+        result.put("size", Long.parseLong(size));
         result.put("data", resultData);
         return result;
     }

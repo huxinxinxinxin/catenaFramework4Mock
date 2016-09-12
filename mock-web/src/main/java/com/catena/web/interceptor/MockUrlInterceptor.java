@@ -54,7 +54,7 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
             }
             apiKey = new StringBuilder(apiKey.substring(0, apiKey.length() - 1));
         }
-        LOGGER.info("请求 {}", apiKey);
+        LOGGER.info("请求 {}, 来源 {} ", request.getRequestURI(), request.getRemoteHost());
         return apiKey;
     }
 
