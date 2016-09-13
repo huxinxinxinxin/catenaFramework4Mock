@@ -1,4 +1,4 @@
-package com.catena.mock.intel;
+package com.catena.web.intel;
 
 import com.catena.core.annotation.CatenaNodeClass;
 import com.catena.core.annotation.CatenaNodeMethod;

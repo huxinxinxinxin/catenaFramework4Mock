@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
@@ -45,7 +47,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         if (!StringUtils.isEmpty(data)) {
             Map<String, List<LinkedHashMap>> map = JsonUtil.readValue(data.getBytes(), Map.class);
             request.setAttribute("data", toSortLimit(request, map));
-            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithObject(request, response);
+            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
         }
         return false;
     }
@@ -77,14 +79,23 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
             if (sort.split("\\.").length <= 1) {
                 throw new MockRuntimeException(403, "sort格式错误,filed.asc/filed.desc");
             }
-            String key = sort.split("\\.")[0];
-            String order = sort.split("\\.")[1];
+            String key = sort.substring(0, sort.lastIndexOf("."));
+            String order = sort.substring(sort.lastIndexOf(".") +1, sort.length());
             if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
                 throw new MockRuntimeException(403, "sort格式错误,filed.asc/filed.desc");
             }
-            Comparator<LinkedHashMap> comparator = getComparator(resultMap, key, order);
-            if (Objects.nonNull(comparator)) {
-                stream = stream.sorted(comparator);
+            if (key.contains(".")) {
+                stream = stream.sorted(new Comparator<Object>() {
+                    @Override
+                    public int compare(Object o1, Object o2) {
+                        return compareTo(o1, o2, key, order);
+                    }
+                });
+            } else {
+                Comparator<LinkedHashMap> comparator = getComparator(resultMap, key, order);
+                if (Objects.nonNull(comparator)) {
+                    stream = stream.sorted(comparator);
+                }
             }
         }
 
@@ -101,6 +112,73 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         result.put("index", Long.parseLong(index));
         result.put("size", Long.parseLong(size));
         result.put("data", resultData);
+        return result;
+    }
+
+    protected int compareTo(Object o1, Object o2, String key, String order) {
+        Integer result;
+        o1 = getObject(key, (LinkedHashMap) o1);
+
+        o2 = getObject(key, (LinkedHashMap) o2);
+        String dateFormatStr = "yyyy-MM-dd hh:mm:ss";
+        if (o1 instanceof Integer) {
+            if ((Integer) o1 - (Integer) o2 > 0) {
+                result = 1;
+            } else if ((Integer) o1 - (Integer) o2 < 0) {
+                result = -1;
+            } else {
+                result = 0;
+            }
+        } else if (o1 instanceof Long) {
+            if ((Long) o1 - (Long) o2 > 0) {
+                result = 1;
+            } else if ((Long) o1 - (Long) o2 < 0) {
+                result = -1;
+            } else {
+                result = 0;
+            }
+        } else if (o1 instanceof String) {
+            if (((String) o1).compareTo((String) o2) > 0) {
+                result = 1;
+            } else if (((String) o1).compareTo((String) o2) < 0) {
+                result = -1;
+            } else {
+                result = 0;
+            }
+        } else if (o1 instanceof Float) {
+            if ((Float) o1 - (Float) o2 > 0) {
+                result = 1;
+            } else if ((Float) o1 - (Float) o2 < 0) {
+                result = -1;
+            } else {
+                result = 0;
+            }
+        } else if (o1 instanceof Double) {
+            if ((Double) o1 - (Double) o2 > 0) {
+                result = 1;
+            } else if ((Double) o1 - (Double) o2 < 0) {
+                result = -1;
+            } else {
+                result = 0;
+            }
+        } else if (o1 instanceof Date) {
+            try {
+                if (new SimpleDateFormat(dateFormatStr).parse((String) o1).getTime() - new SimpleDateFormat(dateFormatStr).parse((String) o2).getTime() > 0) {
+                    result = 1;
+                } else if (new SimpleDateFormat(dateFormatStr).parse((String) o1).getTime() - new SimpleDateFormat(dateFormatStr).parse((String) o2).getTime() < 0) {
+                    result = -1;
+                } else {
+                    result = 0;
+                }
+            } catch (ParseException e) {
+                throw new MockRuntimeException(500, "时间转换失败");
+            }
+        } else {
+            throw new MockRuntimeException(499, "类型校验错误");
+        }
+        if (order.equalsIgnoreCase("desc")) {
+            result = ~result+1;
+        }
         return result;
     }
 
@@ -157,6 +235,33 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
                 files.add(file);
             }
         }
+    }
+
+    protected Object getObject(String key, LinkedHashMap linkedHashMap) {
+        Object o;
+        String useKey;
+        Integer useIndex = 0;
+        if (key.contains(".")) {
+            String[] str = key.split("\\.");
+            o = linkedHashMap.get(str[0]);
+            for (int i = 1; i < str.length; i++) {
+                if (str[i].contains("[")) {
+                    useKey = str[i].substring(0, str[i].lastIndexOf("["));
+                    useIndex = Integer.valueOf(str[i].substring(str[i].lastIndexOf("[") + 1, str[i].length() - 1));
+                } else {
+                    useKey = str[i];
+                }
+                o = ((LinkedHashMap) o).get(useKey);
+                if (!(o instanceof LinkedHashMap)) {
+                    if (o instanceof List) {
+                        o = ((List) o).get(useIndex);
+                    }
+                }
+            }
+        } else {
+            o = linkedHashMap.get(key);
+        }
+        return o;
     }
 
     protected String getUrlDataKey() {

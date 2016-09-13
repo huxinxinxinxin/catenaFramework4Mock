@@ -13,8 +13,23 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.catena.framework</groupId>
+            <groupId>com.catena.framework.1_5</groupId>
             <artifactId>catena-core</artifactId>
+            <version>1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.catena.framework.1_1</groupId>
+            <artifactId>catena-logging</artifactId>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.catena.framework.1_5</groupId>
+            <artifactId>catena-common</artifactId>
+            <version>1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.catena.framework.1_1</groupId>
+            <artifactId>catena-cache</artifactId>
             <version>1.1</version>
         </dependency>
         <dependency>
