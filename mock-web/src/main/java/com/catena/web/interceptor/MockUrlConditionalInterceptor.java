@@ -81,7 +81,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
             if (value.startsWith(LIKE)) {
                 return stream.filter(linkedHashMap -> Objects.nonNull(linkedHashMap.get(key)) && ((String) linkedHashMap.get(key)).contains(value.substring(value.lastIndexOf(LIKE) + 5, value.length())));
             }
-            return stream.filter(linkedHashMap -> Objects.nonNull(linkedHashMap.get(key)) && linkedHashMap.get(key).equals(value));
+            return stream.filter(linkedHashMap ->toLtGtFilter(key, value, linkedHashMap));
         }
     }
 
@@ -100,6 +100,8 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                 return new SimpleDateFormat(dateFormatStr).parse((String) o).getTime() < new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length())).getTime();
             } else if (value.contains(GREATER_THAN)) {
                 return new SimpleDateFormat(dateFormatStr).parse((String) o).getTime() > new SimpleDateFormat(dateFormatStr).parse(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length())).getTime();
+            } else {
+                return new SimpleDateFormat(dateFormatStr).parse((String) o).getTime() == new SimpleDateFormat(dateFormatStr).parse(value).getTime();
             }
         } catch (Exception e4) {
             try {
@@ -111,6 +113,11 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                     return (Integer) o < Integer.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
                 } else if (value.contains(GREATER_THAN)) {
                     return (Integer) o > Integer.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
+                } else {
+                    if ((Integer) o == 3){
+                        System.out.println(3);
+                    }
+                    return (Integer) o - Integer.valueOf(value) == 0;
                 }
             } catch (Exception e) {
                 try {
@@ -122,6 +129,8 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                         return (Long) o < Long.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
                     } else if (value.contains(GREATER_THAN)) {
                         return (Long) o > Long.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
+                    } else {
+                        return (Long) o - Long.valueOf(value) == 0;
                     }
                 } catch (Exception e1) {
                     try {
@@ -133,6 +142,8 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                             return (Double) o < Double.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
                         } else if (value.contains(GREATER_THAN)) {
                             return (Double) o > Double.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
+                        } else {
+                            return (Double) o - Double.valueOf(value) == 0;
                         }
                     } catch (Exception e2) {
                         try {
@@ -144,6 +155,8 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                                 return (Float) o < Float.valueOf(value.substring(value.lastIndexOf(LESS_THAN) + 3, value.length()));
                             } else if (value.contains(GREATER_THAN)) {
                                 return (Float) o > Float.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
+                            } else {
+                                return (Float) o - Float.valueOf(value) == 0;
                             }
                         } catch (Exception e3) {
                             throw new MockRuntimeException(403, "转换失败:{}" + e.getMessage());
@@ -152,7 +165,6 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                 }
             }
         }
-        return true;
     }
 
     @Override
