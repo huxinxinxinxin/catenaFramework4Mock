@@ -231,7 +231,8 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         if (Objects.isNull(fileLastModified.get(file.getName()))) {
             files.add(file);
         } else {
-            if (!fileLastModified.get(file.getName()).equals(file.lastModified())) {
+            if (!(fileLastModified.get(file.getName()) - file.lastModified() == 0)) {
+                fileLastModified.put(file.getName(), file.lastModified());
                 files.add(file);
             }
         }

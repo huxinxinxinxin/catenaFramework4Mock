@@ -99,6 +99,7 @@ public class ScanUrlAndDataContext {
     }
 
     public void scanFile(List<File> files) throws IOException {
+        resetApiMap();
         for (File file : files) {
             InputStreamReader isr = new InputStreamReader(new FileInputStream(file), "utf-8");
             BufferedReader br = new BufferedReader(isr);
@@ -114,6 +115,8 @@ public class ScanUrlAndDataContext {
             br.close();
         }
     }
+
+
 
     private void analyzeMockLineStr(StringBuilder lineStr) {
         String str = lineStr.toString().replace("\n", "");
@@ -221,5 +224,13 @@ public class ScanUrlAndDataContext {
 
     public Map<String, Long> getFileLastModified() {
         return fileLastModified;
+    }
+
+    private void resetApiMap() {
+        resourceUrlMap = new HashMap<>();
+        resourceDataGetMap = new HashMap<>();
+        resourceDataPutMap = new HashMap<>();
+        resourceDataPostMap = new HashMap<>();
+        resourceDataDeleteMap = new HashMap<>();
     }
 }

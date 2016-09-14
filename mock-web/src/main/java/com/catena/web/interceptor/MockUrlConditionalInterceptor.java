@@ -43,7 +43,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
         if (!StringUtils.isEmpty(data)) {
             Map<String, List<LinkedHashMap>> map = JsonUtil.readValue(data.getBytes(), Map.class);
             request.setAttribute("data", toConditional(request, map));
-            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
+            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithObject(request, response);
         }
         return false;
     }
