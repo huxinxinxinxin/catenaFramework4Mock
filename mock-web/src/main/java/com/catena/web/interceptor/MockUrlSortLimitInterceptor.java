@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,7 +25,7 @@ import java.util.stream.Stream;
 /**
  * Created by hx-pc on 16-9-6.
  */
-public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
+public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MockUrlSortLimitInterceptor.class);
 
@@ -80,7 +79,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
                 throw new MockRuntimeException(403, "sort格式错误,filed.asc/filed.desc");
             }
             String key = sort.substring(0, sort.lastIndexOf("."));
-            String order = sort.substring(sort.lastIndexOf(".") +1, sort.length());
+            String order = sort.substring(sort.lastIndexOf(".") + 1, sort.length());
             if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
                 throw new MockRuntimeException(403, "sort格式错误,filed.asc/filed.desc");
             }
@@ -177,7 +176,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
             throw new MockRuntimeException(499, "类型校验错误");
         }
         if (order.equalsIgnoreCase("desc")) {
-            result = ~result+1;
+            result = ~result + 1;
         }
         return result;
     }
@@ -215,28 +214,7 @@ public class MockUrlSortLimitInterceptor extends HandlerInterceptorAdapter {
         return comparator;
     }
 
-    protected void checkScanMockData() throws IOException {
-        List<File> files = new CopyOnWriteArrayList<>();
-        File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
-        for (File file : rootDir.listFiles()) {
-            validateLastModified(files, file);
-        }
-        if (!CollectionUtils.isEmpty(files)) {
-            scanUrlAndDataContext.scanFile(files);
-        }
-    }
 
-    protected void validateLastModified(List<File> files, File file) {
-        Map<String, Long> fileLastModified = scanUrlAndDataContext.getFileLastModified();
-        if (Objects.isNull(fileLastModified.get(file.getName()))) {
-            files.add(file);
-        } else {
-            if (!(fileLastModified.get(file.getName()) - file.lastModified() == 0)) {
-                fileLastModified.put(file.getName(), file.lastModified());
-                files.add(file);
-            }
-        }
-    }
 
     protected Object getObject(String key, LinkedHashMap linkedHashMap) {
         Object o;

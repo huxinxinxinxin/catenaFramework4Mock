@@ -3,7 +3,6 @@ package com.catena.mock.core;
 import com.catena.mock.MockRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.util.CollectionUtils;
 
 import java.io.*;
 import java.util.HashMap;
@@ -60,7 +59,7 @@ public class ScanUrlAndDataContext {
         File file = new File("projectEnvironment/environment.properties");
         if (!file.exists()) {
             LOGGER.error("projectEnvironment/environment.properties 文件不存在");
-            throw new MockRuntimeException(404,"环境配置文件environment不存在请创建");
+            throw new MockRuntimeException(404, "环境配置文件environment不存在请创建");
         }
         FileInputStream fis = new FileInputStream(file);
         StringBuilder lineStr = new StringBuilder();
@@ -85,7 +84,7 @@ public class ScanUrlAndDataContext {
             LOGGER.info("创建目录mockConfig成功");
         }
         List<File> files = getFiles(rootDir);
-        scanFile(files);
+        scanFile(files, true);
     }
 
     private List<File> getFiles(File rootDir) {
@@ -98,17 +97,17 @@ public class ScanUrlAndDataContext {
         return list;
     }
 
-    public void scanFile(List<File> files) throws IOException {
-        resetApiMap();
+    public void scanFile(List<File> files, boolean isFirstScan) throws IOException {
         for (File file : files) {
             InputStreamReader isr = new InputStreamReader(new FileInputStream(file), "utf-8");
             BufferedReader br = new BufferedReader(isr);
+            if (!isFirstScan) {
+                LOGGER.info("有文件被修改, 文件名 : {}", file.getName());
+            }
             while (true) {
-                StringBuilder lineStr = new StringBuilder();
                 String s = br.readLine();
                 if (s != null) {
-                    lineStr = lineStr.append(s);
-                    analyzeMockLineStr(lineStr);
+                    analyzeMockLineStr(new StringBuilder().append(s), isFirstScan);
                 } else
                     break;
             }
@@ -117,38 +116,43 @@ public class ScanUrlAndDataContext {
     }
 
 
-
-    private void analyzeMockLineStr(StringBuilder lineStr) {
+    private void analyzeMockLineStr(StringBuilder lineStr, boolean isFirstScan) {
         String str = lineStr.toString().replace("\n", "");
         if (str.length() > 0 && !Objects.equals(str.substring(0, 1), "#")) {
             int indexPoint = str.indexOf('.');
             int indexEqual = str.indexOf('=') + 1;
             String beforePt = str.substring(indexPoint + 1, indexEqual - 1);
             String afterPt = str.substring(indexEqual);
-            if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(API_KEY))) {
-                resourceUrlMap.put(beforePt, afterPt);
+            String apiKey = str.substring(0, indexPoint);
+            buildUrlMap(apiKey, beforePt, afterPt, isFirstScan);
+        }
+    }
+
+    private void buildUrlMap(String apiKey, String beforePt, String afterPt, boolean isFirstScan) {
+        String info = "有api重复 : {}";
+        if (Objects.equals(apiKey, environmentMap.get(API_KEY))) {
+            resourceUrlMap.put(beforePt, afterPt);
+        }
+        if (Objects.equals(apiKey, environmentMap.get(DATA_GET_KEY))) {
+            if (Objects.nonNull(resourceDataGetMap.get(resourceUrlMap.get(beforePt))) && isFirstScan) {
+                LOGGER.info(info, resourceUrlMap.get(beforePt));
             }
-            if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_GET_KEY))) {
-                if (Objects.nonNull(resourceDataGetMap.get(resourceUrlMap.get(beforePt)))) {
-                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
-                }
-                resourceDataGetMap.put(resourceUrlMap.get(beforePt), afterPt);
-            } else if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_POST_KEY))) {
-                if (Objects.nonNull(resourceDataPostMap.get(resourceUrlMap.get(beforePt)))) {
-                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
-                }
-                resourceDataPostMap.put(resourceUrlMap.get(beforePt), afterPt);
-            } else if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_PUT_KEY))) {
-                if (Objects.nonNull(resourceDataPutMap.get(resourceUrlMap.get(beforePt)))) {
-                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
-                }
-                resourceDataPutMap.put(resourceUrlMap.get(beforePt), afterPt);
-            } else if (Objects.equals(str.substring(0, indexPoint), environmentMap.get(DATA_DELETE_KEY))) {
-                if (Objects.nonNull(resourceDataDeleteMap.get(resourceUrlMap.get(beforePt)))) {
-                    LOGGER.info("有api重复 : {}", resourceUrlMap.get(beforePt));
-                }
-                resourceDataDeleteMap.put(resourceUrlMap.get(beforePt), afterPt);
+            resourceDataGetMap.put(resourceUrlMap.get(beforePt), afterPt);
+        } else if (Objects.equals(apiKey, environmentMap.get(DATA_POST_KEY))) {
+            if (Objects.nonNull(resourceDataPostMap.get(resourceUrlMap.get(beforePt))) && isFirstScan) {
+                LOGGER.info(info, resourceUrlMap.get(beforePt));
             }
+            resourceDataPostMap.put(resourceUrlMap.get(beforePt), afterPt);
+        } else if (Objects.equals(apiKey, environmentMap.get(DATA_PUT_KEY))) {
+            if (Objects.nonNull(resourceDataPutMap.get(resourceUrlMap.get(beforePt))) && isFirstScan) {
+                LOGGER.info(info, resourceUrlMap.get(beforePt));
+            }
+            resourceDataPutMap.put(resourceUrlMap.get(beforePt), afterPt);
+        } else if (Objects.equals(apiKey, environmentMap.get(DATA_DELETE_KEY))) {
+            if (Objects.nonNull(resourceDataDeleteMap.get(resourceUrlMap.get(beforePt))) && isFirstScan) {
+                LOGGER.info(info, resourceUrlMap.get(beforePt));
+            }
+            resourceDataDeleteMap.put(resourceUrlMap.get(beforePt), afterPt);
         }
     }
 
@@ -218,19 +222,11 @@ public class ScanUrlAndDataContext {
         } else if (method.equalsIgnoreCase(HttpRequestMethod.DELETE.name())) {
             return getResourceDataDeleteMap().get(requestURI);
         } else {
-            throw new MockRuntimeException(405,"httpMethod 错误");
+            throw new MockRuntimeException(405, "httpMethod 错误");
         }
     }
 
     public Map<String, Long> getFileLastModified() {
         return fileLastModified;
-    }
-
-    private void resetApiMap() {
-        resourceUrlMap = new HashMap<>();
-        resourceDataGetMap = new HashMap<>();
-        resourceDataPutMap = new HashMap<>();
-        resourceDataPostMap = new HashMap<>();
-        resourceDataDeleteMap = new HashMap<>();
     }
 }

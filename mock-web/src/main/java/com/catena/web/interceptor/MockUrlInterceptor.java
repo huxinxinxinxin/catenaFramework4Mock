@@ -2,7 +2,6 @@ package com.catena.web.interceptor;
 
 import com.catena.core.CatenaContext;
 import com.catena.mock.core.ScanUrlAndDataContext;
-import com.catena.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,26 +56,26 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
         return apiKey;
     }
 
-    private void checkScanMockData() throws IOException {
+    protected void checkScanMockData() throws IOException {
         List<File> files = new CopyOnWriteArrayList<>();
         File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
         for (File file : rootDir.listFiles()) {
             validateLastModified(files, file);
         }
         if (!CollectionUtils.isEmpty(files)) {
-            scanUrlAndDataContext.scanFile(files);
+            scanUrlAndDataContext.scanFile(files, false);
         }
     }
 
-    private void validateLastModified(List<File> files, File file) {
+    protected void validateLastModified(List<File> files, File file) {
         Map<String, Long> fileLastModified = scanUrlAndDataContext.getFileLastModified();
         if (Objects.isNull(fileLastModified.get(file.getName()))) {
             files.add(file);
         } else {
-            if (!fileLastModified.get(file.getName()).equals(file.lastModified())) {
+            if (!(fileLastModified.get(file.getName()) - file.lastModified() == 0)) {
+                fileLastModified.put(file.getName(), file.lastModified());
                 files.add(file);
             }
         }
     }
-
 }
