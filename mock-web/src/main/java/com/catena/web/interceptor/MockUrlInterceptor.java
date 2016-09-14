@@ -39,6 +39,7 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
         StringBuilder apiKey = getApiKey(request);
         String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
         if (!StringUtils.isEmpty(data)) {
+            request.setAttribute("data", data);
             catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
         }
         return false;
