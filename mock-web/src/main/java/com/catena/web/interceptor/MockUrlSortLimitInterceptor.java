@@ -7,17 +7,13 @@ import com.catena.util.JsonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,6 +33,8 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
 
 
     private static final String URL_DATA_KEY = "list";
+    private static final String SORT_DESC = "desc";
+    private static final String SORT_ASC = "asc";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -80,7 +78,7 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
             }
             String key = sort.substring(0, sort.lastIndexOf("."));
             String order = sort.substring(sort.lastIndexOf(".") + 1, sort.length());
-            if (!order.equalsIgnoreCase("asc") && !order.equalsIgnoreCase("desc")) {
+            if (!order.equalsIgnoreCase(SORT_ASC) && !order.equalsIgnoreCase(SORT_DESC)) {
                 throw new MockRuntimeException(403, "sort格式错误,filed.asc/filed.desc");
             }
             if (key.contains(".")) {
@@ -175,7 +173,7 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
         } else {
             throw new MockRuntimeException(499, "类型校验错误");
         }
-        if (order.equalsIgnoreCase("desc")) {
+        if (order.equalsIgnoreCase(SORT_DESC)) {
             result = ~result + 1;
         }
         return result;
@@ -208,12 +206,11 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
             final Function<LinkedHashMap, Date> by = p1 -> (Date) p1.get(key);
             comparator = Comparator.comparing(by);
         }
-        if (Objects.nonNull(comparator) && order.equalsIgnoreCase("desc")) {
+        if (Objects.nonNull(comparator) && order.equalsIgnoreCase(SORT_DESC)) {
             comparator = comparator.reversed();
         }
         return comparator;
     }
-
 
 
     protected Object getObject(String key, LinkedHashMap linkedHashMap) {

@@ -1,6 +1,7 @@
 package com.catena.web.interceptor;
 
 import com.catena.core.CatenaContext;
+import com.catena.mock.MockRuntimeException;
 import com.catena.mock.core.ScanUrlAndDataContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

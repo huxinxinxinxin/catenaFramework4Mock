@@ -36,6 +36,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     private CatenaContext catenaContext;
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         checkScanMockData();
         StringBuilder apiKey = getApiKey(request);
@@ -114,9 +115,6 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                 } else if (value.contains(GREATER_THAN)) {
                     return (Integer) o > Integer.valueOf(value.substring(value.lastIndexOf(GREATER_THAN) + 3, value.length()));
                 } else {
-                    if ((Integer) o == 3){
-                        System.out.println(3);
-                    }
                     return (Integer) o - Integer.valueOf(value) == 0;
                 }
             } catch (Exception e) {
