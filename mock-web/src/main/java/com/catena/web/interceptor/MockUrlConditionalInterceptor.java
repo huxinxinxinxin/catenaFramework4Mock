@@ -36,7 +36,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     private CatenaContext catenaContext;
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings ("unchecked")
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         checkScanMockData();
         StringBuilder apiKey = getApiKey(request);
@@ -50,7 +50,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     }
 
     protected StringBuilder getApiKey(HttpServletRequest request) {
-        LOGGER.info("请求 {}, 来源 {} ", request.getRequestURI(), request.getRemoteHost());
+        LOGGER.info("请求 {}, 来源 {} ", getUrlAddress(request), request.getRemoteHost());
         return new StringBuilder(request.getRequestURI());
     }
 
@@ -74,7 +74,12 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
             return stream.filter(linkedHashMap -> toLtGtFilter(key, value, linkedHashMap));
         } else if (key.equals("sort")) {
             return stream.filter(linkedHashMap -> {
-                String useKey = value.substring(0, value.lastIndexOf("."));
+                String useKey;
+                if (!value.contains("desc") && !value.contains("asc")) {
+                    useKey = value;
+                } else {
+                    useKey = value.substring(0, value.lastIndexOf("."));
+                }
                 Object o = getObject(useKey, linkedHashMap);
                 return o != null;
             });
@@ -82,7 +87,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
             if (value.startsWith(LIKE)) {
                 return stream.filter(linkedHashMap -> Objects.nonNull(linkedHashMap.get(key)) && ((String) linkedHashMap.get(key)).contains(value.substring(value.lastIndexOf(LIKE) + 5, value.length())));
             }
-            return stream.filter(linkedHashMap ->toLtGtFilter(key, value, linkedHashMap));
+            return stream.filter(linkedHashMap -> toLtGtFilter(key, value, linkedHashMap));
         }
     }
 

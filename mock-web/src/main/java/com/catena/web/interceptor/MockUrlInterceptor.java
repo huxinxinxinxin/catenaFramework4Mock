@@ -45,6 +45,12 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
     }
 
     private StringBuilder getApiKey(HttpServletRequest request) {
+        StringBuilder apiKey = getUrlAddress(request);
+        LOGGER.info("请求 {}, 来源 {} ",apiKey, request.getRemoteHost());
+        return apiKey;
+    }
+
+    protected StringBuilder getUrlAddress(HttpServletRequest request) {
         StringBuilder apiKey = new StringBuilder(request.getRequestURI());
         if (request.getParameterNames() != null && request.getParameterMap().size() > 0) {
             apiKey.append("?");
@@ -53,7 +59,6 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
             }
             apiKey = new StringBuilder(apiKey.substring(0, apiKey.length() - 1));
         }
-        LOGGER.info("请求 {}, 来源 {} ", request.getRequestURI(), request.getRemoteHost());
         return apiKey;
     }
 
