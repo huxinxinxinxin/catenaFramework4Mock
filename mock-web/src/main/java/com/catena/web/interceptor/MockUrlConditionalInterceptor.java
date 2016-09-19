@@ -59,7 +59,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
         List<LinkedHashMap> list = map.get(URL_DATA_KEY);
         Stream<LinkedHashMap> stream = list.stream();
         for (Map.Entry<String, String[]> e : (request.getParameterMap()).entrySet()) {
-            if (!e.getKey().equalsIgnoreCase("index") && !e.getKey().equalsIgnoreCase("size")) {
+            if (!e.getKey().equalsIgnoreCase("index") && !e.getKey().equalsIgnoreCase("size") && !e.getKey().equalsIgnoreCase("sort")) {
                 for (String str : e.getValue()) {
                     stream = filter(e.getKey(), str, stream);
                 }
@@ -72,17 +72,6 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     protected Stream<LinkedHashMap> filter(String key, String value, Stream<LinkedHashMap> stream) {
         if (value.startsWith(LESS_THAN) || value.startsWith(GREATER_THAN) || value.startsWith(LESS_THAN_EQUAL) || value.startsWith(GREATER_THAN_EQUAL)) {
             return stream.filter(linkedHashMap -> toLtGtFilter(key, value, linkedHashMap));
-        } else if (key.equals("sort")) {
-            return stream.filter(linkedHashMap -> {
-                String useKey;
-                if (!value.contains("desc") && !value.contains("asc")) {
-                    useKey = value;
-                } else {
-                    useKey = value.substring(0, value.lastIndexOf("."));
-                }
-                Object o = getObject(useKey, linkedHashMap);
-                return o != null;
-            });
         } else {
             if (value.startsWith(LIKE)) {
                 return stream.filter(linkedHashMap -> Objects.nonNull(linkedHashMap.get(key)) && ((String) linkedHashMap.get(key)).contains(value.substring(value.lastIndexOf(LIKE) + 5, value.length())));
@@ -162,7 +151,11 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                                 return (Float) o - Float.valueOf(value) == 0;
                             }
                         } catch (Exception e3) {
-                            throw new MockRuntimeException(403, "转换失败:{}" + e.getMessage());
+                            try {
+                                return o.equals(value);
+                            } catch (Exception e5) {
+                                throw new MockRuntimeException(403, "转换失败:{}" + e.getMessage());
+                            }
                         }
                     }
                 }

@@ -74,7 +74,7 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
         String size = request.getParameter("size");
         if (Objects.nonNull(sort)) {
             if (!sort.contains(SORT_DESC) && !sort.contains(SORT_ASC)) {
-                sort += "."+SORT_DESC;
+                sort += "." + SORT_DESC;
             }
             String key = sort.substring(0, sort.lastIndexOf("."));
             String order = sort.substring(sort.lastIndexOf(".") + 1, sort.length());
@@ -113,6 +113,12 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
 
     protected int compareTo(Object o1, Object o2, String key, String order) {
         Integer result;
+        if (Objects.isNull(o1)) {
+            return 1;
+        }
+        if (Objects.isNull(o2)) {
+            return  0;
+        }
         o1 = getObject(key, (LinkedHashMap) o1);
 
         o2 = getObject(key, (LinkedHashMap) o2);
