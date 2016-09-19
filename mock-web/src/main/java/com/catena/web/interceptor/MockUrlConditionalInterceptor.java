@@ -50,7 +50,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     }
 
     protected StringBuilder getApiKey(HttpServletRequest request) {
-        LOGGER.info("请求 {}, 来源 {} ", getUrlAddress(request), request.getRemoteHost());
+        LOGGER.info("请求 {}, 来源 {} ", getUrlAddress(request), request.getHeader("Host"));
         return new StringBuilder(request.getRequestURI());
     }
 

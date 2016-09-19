@@ -60,7 +60,7 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
             }
             apiKey = new StringBuilder(apiKey.substring(0, apiKey.length() - 1));
         }
-        LOGGER.info("请求 {}, 来源 {} ", getUrlAddress(request), request.getRemoteHost());
+        LOGGER.info("请求 {}, 来源 {} ", getUrlAddress(request), request.getHeader("Host"));
         return apiKey;
     }
 

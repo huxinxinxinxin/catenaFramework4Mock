@@ -58,7 +58,7 @@ public class ScanUrlAndDataContext {
     private void loadEnvironment() throws IOException {
         File file = new File("projectEnvironment/environment.properties");
         if (!file.exists()) {
-            LOGGER.error("projectEnvironment/environment.properties 文件不存在");
+            LOGGER.error("projectEnvironment/environment.properties 文件不存在manw");
             throw new MockRuntimeException(404, "环境配置文件environment不存在请创建");
         }
         FileInputStream fis = new FileInputStream(file);
