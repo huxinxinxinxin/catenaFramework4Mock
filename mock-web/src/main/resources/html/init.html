@@ -22,7 +22,7 @@
         function showData(data, method) {
             $.ajax({
                url: data,
-               dataType: 'text',
+               dataType: 'json',
                type: 'GET',
                beforeSend: function (xhr) {
                    xhr.setRequestHeader("method", method);
@@ -30,9 +30,11 @@
                async: false,
                cache: true,
                success: function (response) {
-                    $("#section1").css("margin-top", pageY - 150);;
-                    $("#section1").html("<div style='border-style: solid; border-width: thick;'>"+response+"</div>");
-                    $("#section1").html("<div style='border-style: solid; border-width: thick;'>"+response+"</div>");
+                    $("#section1").css("margin-top", pageY - 150 < 110 ? 110 : pageY - 150);;
+                    $("#section1").html("<div style=';border-style: solid; border-width: thick;'>数据</div>");
+                    $("#section1").append("<div style='border-style: solid; border-width: thick;overflow:auto'><font style='font-size:15px'>"+JSON.stringify(response.data)+"</font></div>");
+                    $("#section1").append("<div style='border-style: solid; border-width: thick;'>简介</div>");
+                    $("#section1").append("<div style='border-style: solid; border-width: thick;overflow:auto'><font style='font-size:15px'>"+JSON.stringify(response.content)+"</font></div>");
                     $("#section1").show();
                }
         });
@@ -54,8 +56,6 @@
            };
 
            getMockList($("#method").val());
-
-
           $("#selectApi").click(function(){
               var addApiText = $("#addApi").text();
               if (addApiText.substring(0,1)==">") {
@@ -64,7 +64,7 @@
               if ($(this).text().substring(0,1)!=">") {
                 $(this).text(">"+$(this).text());
               }
-              getMockList("GET");
+              getMockList($("#method").val());
           });
 
           $("#method").change(function(){
@@ -95,7 +95,8 @@
                     key:$("#key").val(),
                     apiValue:$("#api").val(),
                     httpRequestMethod:$("#httpRequestMethod").val(),
-                    dataValue:$("#data").val()
+                    dataValue:$("#data").val(),
+                    content:$("#content").val()
                   },
                   function(data,status){
                     if (status == "success") {alert("添加成功")}
@@ -146,7 +147,7 @@
     <label id="addApi" style="padding:20px;mousePointer=5">添加API</label><br>
 </div>
 
-<div id="section" style="width:60%;float:right;margin-right:300px">
+<div id="section" style="width:60%;float:right;margin-right:300px;z-index:10">
 
     <span id="section2" class="section" style="display:none">
         <div align="center">
@@ -186,10 +187,13 @@
             <textarea id="data" style="width:500px;height:500px"></textarea>
 
             <div style="width:100%;height:20px"></div>
+            <label>其他:</label>
+            <div style="width:100%;height:20px"></div>
+            <textarea id="content" style="width:500px;height:500px"></textarea>
         </div>
     </span>
 </div>
-<div id="section1" style="width:20%">
+<div id="section1" style="width:20%;">
     <h1>MOCK</h1>
 
     <p>
@@ -197,7 +201,7 @@
     </p>
 
     <p>
-        注意2:有需要分页排序的数据的时候,请按照格式{"data":分页数据}来填写
+        注意2:有需要分页排序的数据的时候,请按照格式{"data":分页数据}
     </p>
 </div>
 <div id="footer">

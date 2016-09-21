@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import java.io.*;
-import java.text.AttributedString;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -24,16 +23,24 @@ public class ScanUrlAndDataContext {
     public static final String DATA_POST_KEY = "data.post.key";
     public static final String DATA_PUT_KEY = "data.put.key";
     public static final String DATA_DELETE_KEY = "data.delete.key";
-    public static final String DATA_CONTENT_KEY = "data.content.key";
+    public static final String DATA_CONTENT_GET_KEY = "data.content.get.key";
+    public static final String DATA_CONTENT_POST_KEY = "data.content.post.key";
+    public static final String DATA_CONTENT_PUT_KEY = "data.content.put.key";
+    public static final String DATA_CONTENT_DELETE_KEY = "data.content.delete.key";
     private List<Map.Entry<String, String>> allKeyUrl = new CopyOnWriteArrayList<>();
     private Map<String, String> resourceUrlMap = new HashMap<>();
     private Map<String, String> resourceDataGetMap = new HashMap<>();
     private Map<String, String> resourceDataPostMap = new HashMap<>();
     private Map<String, String> resourceDataPutMap = new HashMap<>();
     private Map<String, String> resourceDataDeleteMap = new HashMap<>();
+    private Map<String, String> resourceContentGetMap = new HashMap<>();
+    private Map<String, String> resourceContentPostMap = new HashMap<>();
+    private Map<String, String> resourceContentPutMap = new HashMap<>();
+    private Map<String, String> resourceContentDeleteMap = new HashMap<>();
     private Map<String, String> environmentMap = new HashMap<>();
     private Map<String, Long> fileLastModified = new HashMap<>();
     private boolean scanSwitch = false;
+    private static Object object = new Object();
 
     public ScanUrlAndDataContext() throws IOException {
         loadEnvironment();
@@ -130,11 +137,22 @@ public class ScanUrlAndDataContext {
     }
 
     private void buildUrlMap(String apiKey, String beforePt, String afterPt, boolean isFirstScan) {
-        String info = "有api重复 : {}";
         if (Objects.equals(apiKey, environmentMap.get(API_KEY))) {
-            allKeyUrl.add(new AbstractMap.SimpleEntry<>(beforePt, afterPt));
+            if (isFirstScan) {
+                allKeyUrl.add(new AbstractMap.SimpleEntry<>(beforePt, afterPt));
+            } else {
+                if(allKeyUrl.stream().allMatch(entry -> !(entry.getKey().equals(beforePt) && entry.getValue().equals(afterPt)))){
+                    allKeyUrl.add(new AbstractMap.SimpleEntry<>(beforePt, afterPt));
+                }
+            }
             resourceUrlMap.put(beforePt, afterPt);
         }
+        buildDataMap(apiKey, beforePt, afterPt, isFirstScan);
+        buildContentMap(apiKey, beforePt, afterPt);
+    }
+
+    private void buildDataMap(String apiKey, String beforePt, String afterPt, boolean isFirstScan) {
+        String info = "有api重复 : {}";
         if (Objects.equals(apiKey, environmentMap.get(DATA_GET_KEY))) {
             if (Objects.nonNull(resourceDataGetMap.get(resourceUrlMap.get(beforePt))) && isFirstScan) {
                 LOGGER.info(info, resourceUrlMap.get(beforePt));
@@ -157,6 +175,19 @@ public class ScanUrlAndDataContext {
             resourceDataDeleteMap.put(resourceUrlMap.get(beforePt), afterPt);
         }
     }
+
+    private void buildContentMap(String apiKey, String beforePt, String afterPt) {
+        if (Objects.equals(apiKey, environmentMap.get(DATA_CONTENT_GET_KEY))) {
+            resourceContentGetMap.put(resourceUrlMap.get(beforePt), afterPt);
+        } else if (Objects.equals(apiKey, environmentMap.get(DATA_CONTENT_POST_KEY))) {
+            resourceContentPostMap.put(resourceUrlMap.get(beforePt), afterPt);
+        } else if (Objects.equals(apiKey, environmentMap.get(DATA_CONTENT_PUT_KEY))) {
+            resourceContentPutMap.put(resourceUrlMap.get(beforePt), afterPt);
+        } else if (Objects.equals(apiKey, environmentMap.get(DATA_CONTENT_DELETE_KEY))) {
+            resourceContentDeleteMap.put(resourceUrlMap.get(beforePt), afterPt);
+        }
+    }
+
 
     private void analyzeEnvLineStr(StringBuilder lineStr) {
         String str = lineStr.toString().replace("\n", "");
@@ -228,6 +259,20 @@ public class ScanUrlAndDataContext {
         }
     }
 
+    public String getContentWithApi(String requestURI, String method) {
+        if (method.equalsIgnoreCase(HttpRequestMethod.GET.name())) {
+            return getResourceContentGetMap().get(requestURI);
+        } else if (method.equalsIgnoreCase(HttpRequestMethod.POST.name())) {
+            return getResourceContentPostMap().get(requestURI);
+        } else if (method.equalsIgnoreCase(HttpRequestMethod.PUT.name())) {
+            return getResourceContentPutMap().get(requestURI);
+        } else if (method.equalsIgnoreCase(HttpRequestMethod.DELETE.name())) {
+            return getResourceContentDeleteMap().get(requestURI);
+        } else {
+            throw new MockRuntimeException(405, "httpMethod 错误");
+        }
+    }
+
     public Map<String, Long> getFileLastModified() {
         return fileLastModified;
     }
@@ -237,13 +282,15 @@ public class ScanUrlAndDataContext {
     }
 
     public void checkScanMockData() throws IOException {
-        List<File> files = new CopyOnWriteArrayList<>();
-        File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
-        for (File file : rootDir.listFiles()) {
-            validateLastModified(files, file);
-        }
-        if (!CollectionUtils.isEmpty(files)) {
-            this.scanFile(files, false);
+        File rootDir =new File(ScanUrlAndDataContext.FILE_PATH);
+        synchronized (object) {
+            List<File> files = new CopyOnWriteArrayList<>();
+            for (File file : rootDir.listFiles()) {
+                validateLastModified(files, file);
+            }
+            if (!CollectionUtils.isEmpty(files)) {
+                this.scanFile(files, false);
+            }
         }
     }
 
@@ -257,5 +304,21 @@ public class ScanUrlAndDataContext {
                 files.add(file);
             }
         }
+    }
+
+    public Map<String, String> getResourceContentGetMap() {
+        return resourceContentGetMap;
+    }
+
+    public Map<String, String> getResourceContentPostMap() {
+        return resourceContentPostMap;
+    }
+
+    public Map<String, String> getResourceContentPutMap() {
+        return resourceContentPutMap;
+    }
+
+    public Map<String, String> getResourceContentDeleteMap() {
+        return resourceContentDeleteMap;
     }
 }

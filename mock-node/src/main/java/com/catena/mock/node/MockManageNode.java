@@ -22,6 +22,7 @@ public class MockManageNode extends CatenaNode {
 
     private static final String API_STR = "apiStr";
     private static final String DATA_STR = "dataStr";
+    private static final String CONTENT_STR = "contentStr";
     private static final String REQUEST_ERROR = "请求方式错误";
 
     public void setScanResetToTrue() {
@@ -31,8 +32,10 @@ public class MockManageNode extends CatenaNode {
     public void addMock(MockBaseParam mockBaseParam) {
         String apiStr = "\n" + getBean(ScanUrlAndDataContext.class).getEnvironmentMap().get(ScanUrlAndDataContext.API_KEY) + "." + mockBaseParam.getKey() + "=" + mockBaseParam.getApiValue() + "\n";
         String dataStr = getBean(ScanUrlAndDataContext.class).getEnvironmentMap().get(getDataKey(mockBaseParam.getHttpRequestMethod())) + "." + mockBaseParam.getKey() + "=" + mockBaseParam.getDataValue() + "\n";
+        String contentStr = getBean(ScanUrlAndDataContext.class).getEnvironmentMap().get(getContentKey(mockBaseParam.getHttpRequestMethod())) + "." + mockBaseParam.getKey() + "=" + mockBaseParam.getContent() + "\n";
         mockBaseParam.getOtherParam().put(API_STR, apiStr.getBytes());
         mockBaseParam.getOtherParam().put(DATA_STR, dataStr.getBytes());
+        mockBaseParam.getOtherParam().put(CONTENT_STR, contentStr.getBytes());
     }
 
     public void writerMockFile(MockBaseParam mockBaseParam) throws IOException {
@@ -45,6 +48,7 @@ public class MockManageNode extends CatenaNode {
         FileOutputStream fos = new FileOutputStream(file, true);
         fos.write((byte[]) mockBaseParam.getOtherParam().get(API_STR));
         fos.write((byte[]) mockBaseParam.getOtherParam().get(DATA_STR));
+        fos.write((byte[]) mockBaseParam.getOtherParam().get(CONTENT_STR));
         fos.close();
     }
 
@@ -57,6 +61,20 @@ public class MockManageNode extends CatenaNode {
             return ScanUrlAndDataContext.DATA_PUT_KEY;
         } else if (httpRequestMethod == HttpRequestMethod.DELETE) {
             return ScanUrlAndDataContext.DATA_DELETE_KEY;
+        } else {
+            throw new MockRuntimeException(402, REQUEST_ERROR);
+        }
+    }
+
+    private String getContentKey(HttpRequestMethod httpRequestMethod) {
+        if (httpRequestMethod == HttpRequestMethod.GET) {
+            return ScanUrlAndDataContext.DATA_CONTENT_GET_KEY;
+        } else if (httpRequestMethod == HttpRequestMethod.POST) {
+            return ScanUrlAndDataContext.DATA_CONTENT_POST_KEY;
+        } else if (httpRequestMethod == HttpRequestMethod.PUT) {
+            return ScanUrlAndDataContext.DATA_CONTENT_PUT_KEY;
+        } else if (httpRequestMethod == HttpRequestMethod.DELETE) {
+            return ScanUrlAndDataContext.DATA_CONTENT_DELETE_KEY;
         } else {
             throw new MockRuntimeException(402, REQUEST_ERROR);
         }

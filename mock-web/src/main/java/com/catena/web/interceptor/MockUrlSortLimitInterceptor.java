@@ -1,16 +1,8 @@
 package com.catena.web.interceptor;
 
-import com.catena.core.CatenaContext;
 import com.catena.mock.MockRuntimeException;
-import com.catena.mock.core.ScanUrlAndDataContext;
-import com.catena.util.JsonUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -23,24 +15,10 @@ import java.util.stream.Stream;
  */
 public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MockUrlSortLimitInterceptor.class);
-
-    @Autowired
-    private ScanUrlAndDataContext scanUrlAndDataContext;
-
-    @Autowired
-    private CatenaContext catenaContext;
-
-
     private static final String URL_DATA_KEY = "list";
     private static final String SORT_DESC = "desc";
     private static final String SORT_ASC = "asc";
 
-    @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-
-        return false;
-    }
 
     protected Map<String, Object> toSortLimit(HttpServletRequest request, Map<String, List<LinkedHashMap>> resultMap) {
         Map<String, Object> result = new HashMap<>();
@@ -93,7 +71,7 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
             return 1;
         }
         if (Objects.isNull(o2)) {
-            return  0;
+            return 0;
         }
         o1 = getObject(key, (LinkedHashMap) o1);
 

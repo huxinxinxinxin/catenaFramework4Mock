@@ -18,6 +18,8 @@ public class MockBaseParam extends NodeParameter {
     @NotBlank
     private HttpRequestMethod httpRequestMethod;
 
+    private String content;
+
     public String getApiValue() {
         return apiValue;
     }
@@ -48,5 +50,13 @@ public class MockBaseParam extends NodeParameter {
 
     public void setHttpRequestMethod(HttpRequestMethod httpRequestMethod) {
         this.httpRequestMethod = httpRequestMethod;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

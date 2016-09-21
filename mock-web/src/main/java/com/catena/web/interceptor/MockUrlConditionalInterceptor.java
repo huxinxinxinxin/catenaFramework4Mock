@@ -28,6 +28,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     private static final String LESS_THAN_EQUAL = "$lte";
     private static final String GREATER_THAN_EQUAL = "$gte";
     private static final String LIKE = "$regx";
+    private final String DATA_NULL_WARN ="{\"data\":{\"error\":\"没有数据或api不存在\"}}";
 
     @Autowired
     private ScanUrlAndDataContext scanUrlAndDataContext;
@@ -39,7 +40,39 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     @SuppressWarnings ("unchecked")
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         scanUrlAndDataContext.checkScanMockData();
+        Map<String, Object> result = new HashMap<>();
         StringBuilder apiKey = getApiKey(request);
+        Optional<String> data = buildData(request, apiKey);
+        result.put("content", buildContent(request, apiKey).orElse("没有简介"));
+        request.setAttribute("data", result);
+        try {
+            Map<String, Object> map = new HashMap<>();
+            map.putAll(toConditional(request, JsonUtil.readValue(data.orElse(DATA_NULL_WARN).getBytes(), Map.class)));
+            result.put("data", map);
+        } catch (Exception e) {
+            result.put("data", JsonUtil.readValue(data.orElse(DATA_NULL_WARN).getBytes(), Object.class));
+        }
+        catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithObject(request, response);
+        return false;
+    }
+
+    protected Optional<String> buildContent(HttpServletRequest request, StringBuilder apiKey) {
+        String content;
+        if (request.getHeader("method") == null) {
+            content = scanUrlAndDataContext.getContentWithApi(apiKey.toString(), "GET");
+            if (StringUtils.isEmpty(content)) {
+                content = scanUrlAndDataContext.getContentWithApi(getUrlAddress(request).toString(), "GET");
+            }
+        } else {
+            content = scanUrlAndDataContext.getContentWithApi(apiKey.toString(), request.getHeader("method"));
+            if (StringUtils.isEmpty(content)) {
+                content = scanUrlAndDataContext.getContentWithApi(getUrlAddress(request).toString(), request.getHeader("method"));
+            }
+        }
+        return Optional.ofNullable(content);
+    }
+
+    protected Optional<String> buildData(HttpServletRequest request, StringBuilder apiKey) {
         String data;
         if (request.getHeader("method") == null) {
             data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), "GET");
@@ -52,18 +85,7 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
                 data = scanUrlAndDataContext.getDataWithApi(getUrlAddress(request).toString(), request.getHeader("method"));
             }
         }
-        if (!StringUtils.isEmpty(data)) {
-            try {
-                Map<String, Object> map = JsonUtil.readValue(data.getBytes(), Map.class);
-                map.putAll(toConditional(request, map));
-                request.setAttribute("data", map);
-                catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithObject(request, response);
-            } catch (Exception e) {
-                request.setAttribute("data", data);
-                catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
-            }
-        }
-        return false;
+        return Optional.ofNullable(data);
     }
 
     protected StringBuilder getApiKey(HttpServletRequest request) {
