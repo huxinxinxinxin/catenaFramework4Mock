@@ -4,12 +4,16 @@ import com.catena.core.CatenaContext;
 import com.catena.core.CatenaControllerBase;
 import com.catena.mock.MockRuntimeException;
 import com.catena.mock.core.ScanUrlAndDataContext;
+import com.catena.mock.inject.InjectionLoading;
 import com.catena.web.interceptor.MockUrlConditionalInterceptor;
-import com.catena.web.interceptor.MockUrlInterceptor;
-import com.catena.web.interceptor.MockUrlSortLimitInterceptor;
+import com.lyncode.jtwig.mvc.JtwigViewResolver;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
 import java.io.IOException;
@@ -21,29 +25,16 @@ import java.io.IOException;
 public class MockConfig extends WebMvcConfigurationSupport {
 
 
+    @Value ("${spring.twig.cache:true}")
+    private Boolean twigCache;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
 
-        registry.addInterceptor(mockUrlInterceptor())
-                .addPathPatterns("/api/*")
-                .excludePathPatterns("/api/mock/*", "/favicon.ico", "/error")
-                .excludePathPatterns("/api/park");
-
-        registry.addInterceptor(mockUrlSortLimitInterceptor())
-                .addPathPatterns("/api/list/**");
-
         registry.addInterceptor(mockUrlConditionalInterceptor())
-                .addPathPatterns("/api/conditional/**");
-    }
-
-    @Bean
-    protected MockUrlInterceptor mockUrlInterceptor() {
-        return new MockUrlInterceptor();
-    }
-
-    @Bean
-    protected MockUrlSortLimitInterceptor mockUrlSortLimitInterceptor() {
-        return new MockUrlSortLimitInterceptor();
+                .addPathPatterns("/api/**")
+                .excludePathPatterns("/api/init")
+                .excludePathPatterns("/api/mock", "/favicon.ico", "/error");
     }
 
     @Bean
@@ -61,8 +52,32 @@ public class MockConfig extends WebMvcConfigurationSupport {
         try {
             return new ScanUrlAndDataContext();
         } catch (IOException e) {
-            throw new MockRuntimeException(499,"初始化ScanUrlAndDataContext失败");
+            throw new MockRuntimeException(499, "初始化ScanUrlAndDataContext失败");
         }
     }
 
+    @Bean
+    public InjectionLoading getInjectionLoading() {
+        return new InjectionLoading();
+    }
+
+
+    @Bean
+    public ViewResolver viewResolver() {
+        JtwigViewResolver viewResolver = new JtwigViewResolver();
+        viewResolver.setPrefix("classpath:html/");
+        viewResolver.setSuffix(".html");
+        viewResolver.setEncoding("UTF8");
+        viewResolver.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        if (twigCache == Boolean.FALSE) {
+            viewResolver.setCached(false);
+        }
+        viewResolver.configuration().render();
+        return viewResolver;
+    }
+
+    @Override
+    protected void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/static/**").addResourceLocations("classpath:/static/");
+    }
 }

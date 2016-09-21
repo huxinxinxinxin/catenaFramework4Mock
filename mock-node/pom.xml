@@ -13,9 +13,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.catena.framework.1_5</groupId>
+            <groupId>com.catena.framework.1_7</groupId>
             <artifactId>catena-core</artifactId>
-            <version>1.5</version>
+            <version>1.7</version>
         </dependency>
         <dependency>
             <groupId>com.catena.framework.1_1</groupId>

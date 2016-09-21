@@ -34,20 +34,8 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        checkScanMockData();
-        StringBuilder apiKey = getApiKey(request);
-        String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
-        if (!StringUtils.isEmpty(data)) {
-            request.setAttribute("data", data);
-            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
-        }
-        return false;
-    }
 
-    private StringBuilder getApiKey(HttpServletRequest request) {
-        StringBuilder apiKey = getUrlAddress(request);
-        LOGGER.info("请求 {}, 来源 {} ",apiKey, request.getHeader("Host"));
-        return apiKey;
+        return false;
     }
 
     protected StringBuilder getUrlAddress(HttpServletRequest request) {
@@ -62,26 +50,4 @@ public class MockUrlInterceptor extends HandlerInterceptorAdapter {
         return apiKey;
     }
 
-    protected void checkScanMockData() throws IOException {
-        List<File> files = new CopyOnWriteArrayList<>();
-        File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
-        for (File file : rootDir.listFiles()) {
-            validateLastModified(files, file);
-        }
-        if (!CollectionUtils.isEmpty(files)) {
-            scanUrlAndDataContext.scanFile(files, false);
-        }
-    }
-
-    protected void validateLastModified(List<File> files, File file) {
-        Map<String, Long> fileLastModified = scanUrlAndDataContext.getFileLastModified();
-        if (Objects.isNull(fileLastModified.get(file.getName()))) {
-            files.add(file);
-        } else {
-            if (!(fileLastModified.get(file.getName()) - file.lastModified() == 0)) {
-                fileLastModified.put(file.getName(), file.lastModified());
-                files.add(file);
-            }
-        }
-    }
 }

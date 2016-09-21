@@ -2,7 +2,11 @@ package com.catena.web.controller;
 
 import com.catena.core.CatenaControllerBase;
 import com.catena.entity.ParkEntity;
+import com.catena.mock.MockRuntimeException;
+import com.catena.mock.core.HttpRequestMethod;
+import com.catena.mock.core.ScanUrlAndDataContext;
 import com.catena.mock.param.MockBaseParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,58 +28,30 @@ import java.util.stream.Collectors;
 @RequestMapping ("/api")
 public class MockDataManageController extends CatenaControllerBase {
 
+    @Autowired
+    private ScanUrlAndDataContext scanUrlAndDataContext;
+
+    @RequestMapping (value = "/init", method = RequestMethod.POST)
+    public String init() {
+        return "init";
+    }
+
     @RequestMapping (value = "/mock", method = RequestMethod.POST)
     public void addMock(MockBaseParam mockBaseParam) {
+        if (!mockBaseParam.getApiValue().substring(0,1).equals("/")) {
+            throw new MockRuntimeException(401,"请填写完整的url路径");
+        }
         getOperation("addMock").start(mockBaseParam);
     }
 
     @RequestMapping (value = "/mock", method = RequestMethod.GET)
-    public void getMock(HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+    public void getMock(@RequestParam(required = true) HttpRequestMethod httpRequestMethod, HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws IOException {
+        scanUrlAndDataContext.checkScanMockData();
+        if (httpRequestMethod == null) {
+            servletRequest.setAttribute("httpRequestMethod", "get");
+        } else {
+            servletRequest.setAttribute("httpRequestMethod", httpRequestMethod);
+        }
         getOperation("getMock").startReturnDataWithObject(servletRequest, servletResponse);
     }
-
-    @RequestMapping (value = "/park", method = RequestMethod.GET)
-    public ResponseEntity<List<LinkedHashMap>> getPark(@RequestParam (required = false) String industry,
-                                                       @RequestParam (required = false)Long capitalUp,
-                                                       @RequestParam (required = false)Long capitalDown,
-                                                       @RequestParam (required = false)Integer personUp,
-                                                       @RequestParam (required = false)Integer personDown) throws IOException {
-
-
-        List<LinkedHashMap> results = ParkEntity.buildListParkEntity();
-        results = results.stream().filter(linkedHashMap -> {
-            if (capitalUp != null) {
-                if (linkedHashMap.get("regcap") != null) {
-                    return Double.valueOf(linkedHashMap.get("regcap") + "") < capitalUp;
-                }
-                return false;
-            }
-            if (capitalDown != null) {
-                if (linkedHashMap.get("regcap") != null) {
-                    return Double.valueOf(linkedHashMap.get("regcap") +"") > capitalDown;
-                }
-                return false;
-            }
-            if (personUp != null) {
-                return Integer.valueOf(linkedHashMap.get("person") +"") < personUp;
-            }
-            if (personDown != null) {
-                return Integer.valueOf(linkedHashMap.get("person") + "") > personDown;
-            }
-            if (industry != null) {
-                if (industry.equals("科技创新") && linkedHashMap.get("industry").equals("科技创新")) {
-                    return true;
-                } else if (industry.equals("文化创意") && linkedHashMap.get("industry").equals("文化创意")) {
-                    return true;
-                } else if (industry.equals("电子商务") && linkedHashMap.get("industry").equals("电子商务")) {
-                    return true;
-                } else if (industry.equals("其他")) {
-                    return false;
-                }
-            }
-            return true;
-        }).collect(Collectors.toList());
-        return new ResponseEntity<>(results.stream().collect(Collectors.toList()), HttpStatus.OK);
-    }
-
 }

@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MockUrlConditionalInterceptor.class);
-    private static final String URL_DATA_KEY = "conditional";
+    private static final String URL_DATA_KEY = "data";
     private static final String LESS_THAN = "$lt";
     private static final String GREATER_THAN = "$gt";
     private static final String LESS_THAN_EQUAL = "$lte";
@@ -38,13 +38,30 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
     @Override
     @SuppressWarnings ("unchecked")
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        checkScanMockData();
+        scanUrlAndDataContext.checkScanMockData();
         StringBuilder apiKey = getApiKey(request);
-        String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
+        String data;
+        if (request.getHeader("method") == null) {
+            data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), "GET");
+            if (StringUtils.isEmpty(data)) {
+                data = scanUrlAndDataContext.getDataWithApi(getUrlAddress(request).toString(), "GET");
+            }
+        } else {
+            data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getHeader("method"));
+            if (StringUtils.isEmpty(data)) {
+                data = scanUrlAndDataContext.getDataWithApi(getUrlAddress(request).toString(), request.getHeader("method"));
+            }
+        }
         if (!StringUtils.isEmpty(data)) {
-            Map<String, List<LinkedHashMap>> map = JsonUtil.readValue(data.getBytes(), Map.class);
-            request.setAttribute("data", toConditional(request, map));
-            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithObject(request, response);
+            try {
+                Map<String, Object> map = JsonUtil.readValue(data.getBytes(), Map.class);
+                map.putAll(toConditional(request, map));
+                request.setAttribute("data", map);
+                catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithObject(request, response);
+            } catch (Exception e) {
+                request.setAttribute("data", data);
+                catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
+            }
         }
         return false;
     }
@@ -54,19 +71,32 @@ public class MockUrlConditionalInterceptor extends MockUrlSortLimitInterceptor {
         return new StringBuilder(request.getRequestURI());
     }
 
-    protected Map<String, Object> toConditional(HttpServletRequest request, Map<String, List<LinkedHashMap>> map) {
+    protected Map<String, Object> toConditional(HttpServletRequest request, Map<String, Object> map) {
         Map<String, List<LinkedHashMap>> result = new HashMap<>();
-        List<LinkedHashMap> list = map.get(URL_DATA_KEY);
-        Stream<LinkedHashMap> stream = list.stream();
-        for (Map.Entry<String, String[]> e : (request.getParameterMap()).entrySet()) {
-            if (!e.getKey().equalsIgnoreCase("index") && !e.getKey().equalsIgnoreCase("size") && !e.getKey().equalsIgnoreCase("sort")) {
-                for (String str : e.getValue()) {
-                    stream = filter(e.getKey(), str, stream);
+        Object doObject = map.get(URL_DATA_KEY);
+        if (Objects.nonNull(doObject) && doObject instanceof List) {
+            List<LinkedHashMap> list = (List<LinkedHashMap>) doObject;
+            Stream<LinkedHashMap> stream = list.stream();
+            for (Map.Entry<String, String[]> e : (request.getParameterMap()).entrySet()) {
+                if (!e.getKey().equalsIgnoreCase("index") && !e.getKey().equalsIgnoreCase("size") && !e.getKey().equalsIgnoreCase("sort")) {
+                    for (String str : e.getValue()) {
+                        stream = filter(e.getKey(), str, stream);
+                    }
+                } else if (e.getKey().equalsIgnoreCase("sort")) {
+                    for (String str : e.getValue()) {
+                        if (str.contains(".")) {
+                            str = str.substring(0, str.indexOf("."));
+                        }
+                        final String finalStr = str;
+                        stream = stream.filter(linkedHashMap -> Objects.nonNull(linkedHashMap.get(finalStr)));
+                    }
                 }
             }
+            result.put(URL_DATA_KEY, stream.collect(Collectors.toList()));
+            return toSortLimit(request, result);
+        } else {
+            return map;
         }
-        result.put(URL_DATA_KEY, stream.collect(Collectors.toList()));
-        return toSortLimit(request, result);
     }
 
     protected Stream<LinkedHashMap> filter(String key, String value, Stream<LinkedHashMap> stream) {

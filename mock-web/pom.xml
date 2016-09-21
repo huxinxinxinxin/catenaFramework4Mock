@@ -21,6 +21,11 @@
             <artifactId>mock-node</artifactId>
             <version>1.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.lyncode</groupId>
+            <artifactId>jtwig-spring</artifactId>
+            <version>3.1.1</version>
+        </dependency>
     </dependencies>
 
 

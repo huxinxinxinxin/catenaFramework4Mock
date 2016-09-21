@@ -38,35 +38,12 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        checkScanMockData();
-        StringBuilder apiKey = getApiKey(request);
-        String data = scanUrlAndDataContext.getDataWithApi(apiKey.toString(), request.getMethod());
-        if (!StringUtils.isEmpty(data)) {
-            Map<String, List<LinkedHashMap>> map = JsonUtil.readValue(data.getBytes(), Map.class);
-            request.setAttribute("data", toSortLimit(request, map));
-            catenaContext.getNodeOperationRepository().get("returnData").startReturnDataWithString(request, response);
-        }
-        return false;
-    }
 
-    protected StringBuilder getApiKey(HttpServletRequest request) {
-        StringBuilder apiKey = new StringBuilder(request.getRequestURI());
-        if (request.getParameterNames() != null && request.getParameterMap().size() > 0) {
-            apiKey.append("?");
-            for (Map.Entry<String, String[]> e : (request.getParameterMap()).entrySet()) {
-                if (!e.getKey().equalsIgnoreCase("sort") && !e.getKey().equalsIgnoreCase("index") && !e.getKey().equalsIgnoreCase("size")) {
-                    apiKey.append(e.getKey()).append("=").append(e.getValue()[0]).append("&");
-                }
-            }
-            apiKey = new StringBuilder(apiKey.substring(0, apiKey.length() - 1));
-        }
-        LOGGER.info("请求 {}, 来源 {} ", getUrlAddress(request), request.getHeader("Host"));
-        return apiKey;
+        return false;
     }
 
     protected Map<String, Object> toSortLimit(HttpServletRequest request, Map<String, List<LinkedHashMap>> resultMap) {
         Map<String, Object> result = new HashMap<>();
-        Map<String, List<LinkedHashMap>> resultData = new HashMap<>();
         List<LinkedHashMap> list = resultMap.get(getUrlDataKey());
         Stream<LinkedHashMap> stream = list.stream();
         String sort = request.getParameter("sort");
@@ -106,8 +83,7 @@ public class MockUrlSortLimitInterceptor extends MockUrlInterceptor {
             result.put("index", Long.parseLong(index));
             result.put("size", Long.parseLong(size));
         }
-        resultData.put(getUrlDataKey(), stream.collect(Collectors.toList()));
-        result.put("data", resultData);
+        result.put("data", stream.collect(Collectors.toList()));
         return result;
     }
 

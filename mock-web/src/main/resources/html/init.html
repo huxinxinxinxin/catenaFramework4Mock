@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="/static/jquery-3.1.0.min.js"></script>
+    <script type="text/javascript">
+
+        var pageX = 0;
+        var pageY = 0;
+
+        document.onclick=function(event){
+             pageX = event.pageX;
+             pageY = event.pageY;
+             if(pageX==undefined)
+            {
+                  pageX=event.clientX+document.body.scrollLeft||document.documentElement.scrollLeft;
+            }
+             if(pageY==undefined)
+             {
+                 pageY = event.clientY+document.body.scrollTop||document.documentElement.scrollTop;
+             }
+        }
+        function showData(data, method) {
+            $.ajax({
+               url: data,
+               dataType: 'text',
+               type: 'GET',
+               beforeSend: function (xhr) {
+                   xhr.setRequestHeader("method", method);
+               },
+               async: false,
+               cache: true,
+               success: function (response) {
+                    $("#section1").css("margin-top", pageY - 150);;
+                    $("#section1").html("<div style='border-style: solid; border-width: thick;'>"+response+"</div>");
+                    $("#section1").html("<div style='border-style: solid; border-width: thick;'>"+response+"</div>");
+                    $("#section1").show();
+               }
+        });
+        };
+        $(function(){
+           function getMockList(method) {
+                $.get("/api/mock?httpRequestMethod="+method,function(data,status){
+                  if (status == "success") {
+                    $(".section").hide();
+                    $("#section2").find("table").html("");
+                    $("#section2").find("table").append("<tr><th/><th>api</th><th/><th>key</th></tr>");
+                    for( var i = 0; i < data.length; i++){
+                        var returnData = data[i].data;
+                        $("#section2").find("table").append("<tr><th><a href=javascript:showData('"+data[i].api+"','"+method+"') target='_blank'><<<--</a></th><td style='text-align:center'>"+data[i].api+"</td><td/><td style='text-align:center'>"+data[i].key+"</td></tr>");
+                    }
+                    $("#section2").show();
+                  }
+              });
+           };
+
+           getMockList($("#method").val());
+
+
+          $("#selectApi").click(function(){
+              var addApiText = $("#addApi").text();
+              if (addApiText.substring(0,1)==">") {
+                $("#addApi").text(addApiText.substring(1,addApiText.length));
+              }
+              if ($(this).text().substring(0,1)!=">") {
+                $(this).text(">"+$(this).text());
+              }
+              getMockList("GET");
+          });
+
+          $("#method").change(function(){
+            getMockList($(this).val());
+          });
+
+          $("#addApi").click(function(){
+            var selectApiText = $("#selectApi").text();
+            if (selectApiText.substring(0,1)==">") {
+                $("#selectApi").text(selectApiText.substring(1,selectApiText.length));
+              }
+              if ($(this).text().substring(0,1)!=">") {
+                $(this).text(">"+$(this).text());
+              }
+              $(".section").hide();
+              $("#section3").show();
+          });
+
+          $("#addMock").click(function(){
+            addMockApi();
+          });
+
+          function addMockApi() {
+            try {
+                JSON.parse($("#data").val());
+                $.post("/api/mock",
+                  {
+                    key:$("#key").val(),
+                    apiValue:$("#api").val(),
+                    httpRequestMethod:$("#httpRequestMethod").val(),
+                    dataValue:$("#data").val()
+                  },
+                  function(data,status){
+                    if (status == "success") {alert("添加成功")}
+                  });
+            }catch(parseException){
+                alert("json 格式错误");
+            }
+          };
+        });
+
+    </script>
+    <style>
+        #header {
+        background-color:black;
+        color:white;
+        text-align:center;
+        padding:5px;
+        }
+        #nav {
+        line-height:30px;
+        background-color:#eeeeee;
+        width:100px;
+        float:left;
+        padding:5px;
+        }
+        #section {
+        float:left;
+        padding:10px;
+        }
+        #footer {
+        background-color:black;
+        color:white;
+        clear:both;
+        text-align:center;
+        padding:5px;
+        }
+    </style>
+</head>
+<div id="header">
+    <h1>MOCK</h1>
+</div>
+
+<div id="nav" style="width:20%;" align="center">
+    <div style="height:20px"></div>
+    <label id="selectApi" style="padding:20px;mousePointer=5">查询API</label><br>
+
+    <div style="height:20px"></div>
+    <label id="addApi" style="padding:20px;mousePointer=5">添加API</label><br>
+</div>
+
+<div id="section" style="width:60%;float:right;margin-right:300px">
+
+    <span id="section2" class="section" style="display:none">
+        <div align="center">
+            <select id="method">
+                <option>GET</option>
+                <option>POST</option>
+                <option>PUT</option>
+                <option>DELETE</option>
+            </select>
+        </div>
+        <div style="width:50px"></div>
+        <table align="center" cellSpacing=10 cellPadding=10 rules=rows>
+
+        </table>
+    </span>
+    <span id="section3" class="section" style="display:none">
+        <div align="center">
+            <input type="button" id="addMock" value="提交">
+
+            <div style="width:100%;height:20px"></div>
+            <label>key:</label>
+            <input id="key" type="text" style="border:none; border-bottom:2px solid black;">
+            <label>api:</label>
+            <input id="api" type="text" style="border:none; border-bottom:2px solid black;">
+            <label>method:</label>
+            <select id="httpRequestMethod">
+                <option>GET</option>
+                <option>POST</option>
+                <option>PUT</option>
+                <option>DELETE</option>
+            </select>
+
+            <div style="width:100%;height:20px"></div>
+            <label>data:</label>
+
+            <div style="width:100%;height:10px"></div>
+            <textarea id="data" style="width:500px;height:500px"></textarea>
+
+            <div style="width:100%;height:20px"></div>
+        </div>
+    </span>
+</div>
+<div id="section1" style="width:20%">
+    <h1>MOCK</h1>
+
+    <p>
+        注意1:添加api的时候请填写完整路径,可以加上参数
+    </p>
+
+    <p>
+        注意2:有需要分页排序的数据的时候,请按照格式{"data":分页数据}来填写
+    </p>
+</div>
+<div id="footer">
+    Copyright 呵呵,不知道写啥子
+</div>
+</html>
+

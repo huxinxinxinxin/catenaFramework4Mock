@@ -6,11 +6,16 @@ package com.catena.response;
 public class MockReturnResponse {
 
     private String api;
-    private String data;
+    private String key;
 
-    public MockReturnResponse(String key, String value) {
-        this.api = key;
-        this.data = value;
+    public MockReturnResponse(String key, String api) {
+        this.api = api;
+        this.key = key;
+    }
+
+    public static MockReturnResponse build(String key, String api) {
+
+        return new MockReturnResponse(key, api);
     }
 
     public String getApi() {
@@ -21,15 +26,13 @@ public class MockReturnResponse {
         this.api = api;
     }
 
-    public String getData() {
-        return data;
+
+    public String getKey() {
+        return key;
     }
 
-    public void setData(String data) {
-        this.data = data;
+    public void setKey(String key) {
+        this.key = key;
     }
 
-    public static MockReturnResponse build(String key, String value) {
-        return new MockReturnResponse(key, value);
-    }
 }

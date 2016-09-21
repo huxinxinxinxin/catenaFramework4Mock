@@ -3,12 +3,11 @@ package com.catena.mock.core;
 import com.catena.mock.MockRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.text.AttributedString;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -25,6 +24,8 @@ public class ScanUrlAndDataContext {
     public static final String DATA_POST_KEY = "data.post.key";
     public static final String DATA_PUT_KEY = "data.put.key";
     public static final String DATA_DELETE_KEY = "data.delete.key";
+    public static final String DATA_CONTENT_KEY = "data.content.key";
+    private List<Map.Entry<String, String>> allKeyUrl = new CopyOnWriteArrayList<>();
     private Map<String, String> resourceUrlMap = new HashMap<>();
     private Map<String, String> resourceDataGetMap = new HashMap<>();
     private Map<String, String> resourceDataPostMap = new HashMap<>();
@@ -131,6 +132,7 @@ public class ScanUrlAndDataContext {
     private void buildUrlMap(String apiKey, String beforePt, String afterPt, boolean isFirstScan) {
         String info = "有api重复 : {}";
         if (Objects.equals(apiKey, environmentMap.get(API_KEY))) {
+            allKeyUrl.add(new AbstractMap.SimpleEntry<>(beforePt, afterPt));
             resourceUrlMap.put(beforePt, afterPt);
         }
         if (Objects.equals(apiKey, environmentMap.get(DATA_GET_KEY))) {
@@ -228,5 +230,32 @@ public class ScanUrlAndDataContext {
 
     public Map<String, Long> getFileLastModified() {
         return fileLastModified;
+    }
+
+    public List<Map.Entry<String, String>> getAllKeyUrl() {
+        return allKeyUrl;
+    }
+
+    public void checkScanMockData() throws IOException {
+        List<File> files = new CopyOnWriteArrayList<>();
+        File rootDir = new File(ScanUrlAndDataContext.FILE_PATH);
+        for (File file : rootDir.listFiles()) {
+            validateLastModified(files, file);
+        }
+        if (!CollectionUtils.isEmpty(files)) {
+            this.scanFile(files, false);
+        }
+    }
+
+    public void validateLastModified(List<File> files, File file) {
+        Map<String, Long> fileLastModified = this.getFileLastModified();
+        if (Objects.isNull(fileLastModified.get(file.getName()))) {
+            files.add(file);
+        } else {
+            if (!(fileLastModified.get(file.getName()) - file.lastModified() == 0)) {
+                fileLastModified.put(file.getName(), file.lastModified());
+                files.add(file);
+            }
+        }
     }
 }

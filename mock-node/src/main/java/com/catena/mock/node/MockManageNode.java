@@ -10,6 +10,7 @@ import com.catena.response.MockReturnResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -37,13 +38,13 @@ public class MockManageNode extends CatenaNode {
     public void writerMockFile(MockBaseParam mockBaseParam) throws IOException {
         File file = new File(ScanUrlAndDataContext.FILE_PATH + ScanUrlAndDataContext.FILE_NAME + ".properties");
         if (!file.exists()) {
-            if(!file.createNewFile()) {
-                throw new MockRuntimeException(402,"mockConfig.properties 创建失败");
+            if (!file.createNewFile()) {
+                throw new MockRuntimeException(402, "mockConfig.properties 创建失败");
             }
         }
         FileOutputStream fos = new FileOutputStream(file, true);
         fos.write((byte[]) mockBaseParam.getOtherParam().get(API_STR));
-        fos.write(clearBlank((byte[]) mockBaseParam.getOtherParam().get(DATA_STR)));
+        fos.write((byte[]) mockBaseParam.getOtherParam().get(DATA_STR));
         fos.close();
     }
 
@@ -57,15 +58,22 @@ public class MockManageNode extends CatenaNode {
         } else if (httpRequestMethod == HttpRequestMethod.DELETE) {
             return ScanUrlAndDataContext.DATA_DELETE_KEY;
         } else {
-            throw new MockRuntimeException(402,REQUEST_ERROR);
+            throw new MockRuntimeException(402, REQUEST_ERROR);
         }
     }
 
     public void getMockList(MockBaseParam mockBaseParam) {
-        mockBaseParam.setHttpRequestMethod(getHttpRequestMethod(mockBaseParam.acceptServletRequest().getMethod()));
+        Map<String, String> returnList = new HashMap<>();
+        mockBaseParam.setHttpRequestMethod(getHttpRequestMethod(mockBaseParam.acceptServletRequest().getAttribute("httpRequestMethod").toString()));
         Map<String, String> map = getResourceData(mockBaseParam.getHttpRequestMethod());
         List<MockReturnResponse> list = new CopyOnWriteArrayList<>();
-        map.entrySet().forEach(stringStringEntry -> list.add(MockReturnResponse.build(stringStringEntry.getKey(), stringStringEntry.getValue())));
+        map.keySet().forEach(str -> getBean(ScanUrlAndDataContext.class).getAllKeyUrl()
+                .forEach(entry -> {
+                    if (entry.getValue().equals(str)) {
+                        returnList.put(entry.getKey().toString(), str);
+                        list.add(MockReturnResponse.build(entry.getKey().toString(), str));
+                    }
+                }));
         mockBaseParam.setData(list);
     }
 
@@ -79,7 +87,7 @@ public class MockManageNode extends CatenaNode {
         } else if (method.equalsIgnoreCase(HttpRequestMethod.DELETE.name())) {
             return HttpRequestMethod.DELETE;
         } else {
-            throw new MockRuntimeException(402,REQUEST_ERROR);
+            throw new MockRuntimeException(402, REQUEST_ERROR);
         }
     }
 
@@ -94,7 +102,7 @@ public class MockManageNode extends CatenaNode {
         } else if (httpRequestMethod == HttpRequestMethod.DELETE) {
             return getBean(ScanUrlAndDataContext.class).getResourceDataDeleteMap();
         } else {
-            throw new MockRuntimeException(402,REQUEST_ERROR);
+            throw new MockRuntimeException(402, REQUEST_ERROR);
         }
     }
 

@@ -13,7 +13,7 @@ import com.catena.mock.param.MockBaseParam;
 public interface MockIntel {
 
     @CatenaNodeMethod (key = {"addMock"},
-            methods = {"addMock,writerMockFile,setScanResetToTrue"},
+            methods = {"addMock,writerMockFile"},
             nodes = {MockManageNode.class},
             paramClass = MockBaseParam.class
     )
